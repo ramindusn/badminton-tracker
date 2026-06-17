@@ -7,7 +7,9 @@ export function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
 }
 
-const seedDate = '2026-06-16T12:00'
+const cashDate = '2026-06-15T13:00'
+const shuttlesDate = '2026-06-15T18:00'
+const boxDate = '2026-06-17T19:00'
 
 /** Initial seed data ported from the original mock dashboard. */
 export function seedState(): AppState {
@@ -32,7 +34,7 @@ export function seedState(): AppState {
     members: ['Uditha', 'Sahan', 'Nilusha', 'Ramindu'].map((name) => ({
       id: 'mem-' + name.toLowerCase(),
       name,
-      contributions: [{ id: uid(), amount: 200, date: seedDate }],
+      contributions: [{ id: uid(), amount: 200, date: cashDate }],
     })),
     products: [rsl, victor],
     purchases: [
@@ -41,7 +43,7 @@ export function seedState(): AppState {
         productId: rsl.id,
         barrels: 20,
         pricePerBarrel: 24.5,
-        date: seedDate,
+        date: shuttlesDate,
         note: 'Initial RSL batch',
       },
       {
@@ -49,7 +51,7 @@ export function seedState(): AppState {
         productId: victor.id,
         barrels: 10,
         pricePerBarrel: 27.85,
-        date: seedDate,
+        date: shuttlesDate,
         note: 'Initial Victor batch',
       },
     ],
@@ -59,7 +61,7 @@ export function seedState(): AppState {
         id: uid(),
         description: '2 Bergen 60L boxes (pro-rated 3-for-25€ offer)',
         amount: 16.67,
-        date: seedDate,
+        date: boxDate,
       },
     ],
   }
