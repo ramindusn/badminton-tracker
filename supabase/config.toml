@@ -1,0 +1,8 @@
+# Minimal Supabase CLI config. `supabase init` can regenerate/expand this if a
+# newer CLI version needs more sections. project_id is a local label only — the
+# real remote project is linked via `supabase link --project-ref <ref>`.
+project_id = "badminton-tracker"
+
+[db]
+# Postgres major version of the linked Supabase project.
+major_version = 15

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from './context/AuthContext'
 import { useApp } from './context/AppContext'
 import {
@@ -20,9 +20,15 @@ import { Modal } from './components/Modal'
 import { Button } from './components/Button'
 
 export default function App() {
-  const { isAuthenticated, logout } = useAuth()
-  const { state, resetAll } = useApp()
+  const { isAuthenticated, notAdmin, user, signOut } = useAuth()
+  const { state, resetAll, cloudBacked } = useApp()
   const [loginOpen, setLoginOpen] = useState(false)
+
+  // Close the login dialog once a session is established (e.g. after the magic
+  // link lands, or the e2e bypass authenticates).
+  useEffect(() => {
+    if (isAuthenticated) setLoginOpen(false)
+  }, [isAuthenticated])
 
   const remaining = remainingFund(state)
   const shuttles = totalShuttlesInStock(state)
@@ -34,8 +40,23 @@ export default function App() {
         <Header
           isAuthenticated={isAuthenticated}
           onLogin={() => setLoginOpen(true)}
-          onLogout={logout}
+          onLogout={signOut}
         />
+
+        {notAdmin && (
+          <div
+            data-testid="not-admin-notice"
+            className="mb-6 flex flex-col items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <span>
+              You're signed in as <span className="font-medium">{user?.email}</span> but
+              you're not an admin of this club. Ask an existing admin to add you.
+            </span>
+            <Button variant="secondary" onClick={signOut}>
+              Sign out
+            </Button>
+          </div>
+        )}
 
         {/* Quick stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -80,7 +101,7 @@ export default function App() {
           <MemberBalances />
         </div>
 
-        {isAuthenticated && (
+        {isAuthenticated && !cloudBacked && (
           <div className="mt-6 text-center">
             <Button
               variant="ghost"
@@ -96,7 +117,9 @@ export default function App() {
         )}
 
         <footer className="mt-8 text-center text-xs text-slate-400">
-          Data is stored locally in your browser. 🏸 Pet project.
+          {cloudBacked
+            ? 'Synced to the cloud database. 🏸 Pet project.'
+            : 'Data is stored locally in your browser. 🏸 Pet project.'}
         </footer>
       </div>
 

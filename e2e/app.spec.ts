@@ -1,7 +1,6 @@
 import { test, expect } from '@playwright/test'
 
 const APP_URL = '/badminton-tracker/'
-const PASSWORD = 'shuttle2026'
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP_URL)
@@ -20,11 +19,10 @@ test('starts in read-only mode showing the log-in control', async ({ page }) => 
   await expect(page.getByTestId('add-product-button')).toHaveCount(0)
 })
 
-test('rejects an incorrect password', async ({ page }) => {
+test('opening log in shows the magic-link email form', async ({ page }) => {
   await page.getByTestId('login-button').click()
-  await page.getByTestId('login-password').fill('wrong-password')
-  await page.getByTestId('login-submit').click()
-  await expect(page.getByTestId('login-error')).toBeVisible()
+  await expect(page.getByTestId('magic-link-email')).toBeVisible()
+  await expect(page.getByTestId('login-submit')).toBeVisible()
 })
 
 test('shows the transaction log with a record count', async ({ page }) => {
@@ -33,9 +31,9 @@ test('shows the transaction log with a record count', async ({ page }) => {
   await expect(page.getByTestId('log-range')).toContainText('of')
 })
 
-test('logs in with the correct password and enables editing', async ({ page }) => {
+test('signs in by email and enables editing', async ({ page }) => {
   await page.getByTestId('login-button').click()
-  await page.getByTestId('login-password').fill(PASSWORD)
+  await page.getByTestId('magic-link-email').fill('admin@example.com')
   await page.getByTestId('login-submit').click()
 
   await expect(page.getByTestId('editing-badge')).toBeVisible()

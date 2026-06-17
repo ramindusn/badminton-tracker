@@ -2,12 +2,20 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from 'react'
 import type { AppState, Product } from '../types'
 import { loadState, saveState, seedState, uid } from '../lib/storage'
+import { emptyState, hydrate, syncState } from '../lib/db'
+import { isSupabaseConfigured } from '../lib/supabase'
+import { useAuth } from './AuthContext'
 import { nowLocalInput, productShuttleCount } from '../lib/calc'
+
+// Use Supabase when it's configured and we're not in the e2e build (which
+// always exercises the offline localStorage path so tests need no live DB).
+const USE_SUPABASE = isSupabaseConfigured && import.meta.env.VITE_E2E !== '1'
 
 interface NewProductInput {
   brand: string
@@ -50,6 +58,8 @@ interface AppContextValue {
   deleteTransaction: (ref: TxRef) => void
   // misc
   resetAll: () => void
+  /** True when state is backed by Supabase (vs local-only localStorage). */
+  cloudBacked: boolean
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined)
@@ -59,10 +69,55 @@ function now(): string {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AppState>(() => loadState())
+  const { isAuthenticated } = useAuth()
+  const [state, setState] = useState<AppState>(() =>
+    USE_SUPABASE ? emptyState() : loadState(),
+  )
 
+  // Supabase persistence bookkeeping. clubId is the admin's club; prevRef holds
+  // the last-synced snapshot so the persist effect can diff against it; hydrated
+  // gates writes until the initial load completes.
+  const clubIdRef = useRef<string | null>(null)
+  const prevRef = useRef<AppState>(state)
+  const hydratedRef = useRef(false)
+
+  // Hydrate from Supabase when an admin signs in; clear on sign-out.
   useEffect(() => {
-    saveState(state)
+    if (!USE_SUPABASE) return
+    if (!isAuthenticated) {
+      hydratedRef.current = false
+      clubIdRef.current = null
+      prevRef.current = emptyState()
+      setState(emptyState())
+      return
+    }
+    let active = true
+    hydrate()
+      .then((res) => {
+        if (!active || !res) return
+        clubIdRef.current = res.clubId
+        prevRef.current = res.state
+        hydratedRef.current = true
+        setState(res.state)
+      })
+      .catch((err) => console.error('Supabase hydrate failed:', err))
+    return () => {
+      active = false
+    }
+  }, [isAuthenticated])
+
+  // Persist every change: diff to Supabase when cloud-backed, else localStorage.
+  useEffect(() => {
+    if (USE_SUPABASE) {
+      if (!hydratedRef.current || !clubIdRef.current) return
+      const prev = prevRef.current
+      prevRef.current = state
+      syncState(clubIdRef.current, prev, state).catch((err) =>
+        console.error('Supabase sync failed:', err),
+      )
+    } else {
+      saveState(state)
+    }
   }, [state])
 
   function addProduct(input: NewProductInput): void {
@@ -286,6 +341,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }
 
   function resetAll(): void {
+    if (USE_SUPABASE) {
+      // Reseeding makes no sense against the shared DB — reload from it,
+      // discarding any unsynced local edits.
+      hydrate()
+        .then((res) => {
+          if (!res) return
+          prevRef.current = res.state
+          setState(res.state)
+        })
+        .catch((err) => console.error('Supabase reload failed:', err))
+      return
+    }
     setState(seedState())
   }
 
@@ -303,6 +370,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         addExpense,
         deleteTransaction,
         resetAll,
+        cloudBacked: USE_SUPABASE,
       }}
     >
       {children}

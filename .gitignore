@@ -3,6 +3,9 @@ dist
 dist-ssr
 *.local
 
+# Local env (.env.local is covered by *.local; ignore plain .env too)
+.env
+
 .DS_Store
 .idea
 *.log

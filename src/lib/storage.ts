@@ -2,9 +2,14 @@ import type { AppState } from '../types'
 
 const STORAGE_KEY = 'badminton-tracker-state-v2'
 
-/** Generate a short unique id (good enough for a localStorage app). */
+/**
+ * Generate a unique id as a UUID, so the same id is valid both as a localStorage
+ * key and as a Postgres `uuid` primary key when syncing to Supabase.
+ * `crypto.randomUUID()` is available in secure contexts (localhost + HTTPS) and
+ * in Node 20 (tests/CI).
+ */
 export function uid(): string {
-  return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
+  return crypto.randomUUID()
 }
 
 const cashDate = '2026-06-15T13:00'

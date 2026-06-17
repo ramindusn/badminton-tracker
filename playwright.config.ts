@@ -28,7 +28,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    // VITE_E2E=1 enables the auth bypass so the suite can sign in without a
+    // real magic-link email (see src/context/AuthContext.tsx).
+    command: `VITE_E2E=1 npm run build && npm run preview -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}${BASE_PATH}`,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

@@ -45,8 +45,10 @@ Repo identity used for commits: `ramindusn <ramindusn@users.noreply.github.com>`
 
 ### State / persistence
 - React Context (`AppProvider`, `AuthProvider`).
-- `localStorage` key `badminton-tracker-state-v2` is the single source of truth today.
-- A load-time `migrateSeedDates` shim in `src/lib/storage.ts` rewrites legacy seed timestamps to corrected per-kind dates. Idempotent and safe to run on every load.
+- **Supabase (Postgres) is the source of truth when configured.** `src/lib/db.ts` hydrates `AppState` on admin sign-in and diff-syncs each mutation back (upserts/deletes per table). The synchronous reducers in `AppContext` are unchanged — they remain the single source of truth for logic; `db.ts` just mirrors the resulting state.
+- **Fallback:** when Supabase env vars are absent **or** in the e2e build (`VITE_E2E=1`), the app uses the legacy `localStorage` path (`src/lib/storage.ts`, key `badminton-tracker-state-v2`). `AppContext` picks the path via `USE_SUPABASE`. This keeps the test suite and any non-configured build working with no live DB.
+- A load-time `migrateSeedDates` shim in `src/lib/storage.ts` rewrites legacy seed timestamps (localStorage path only).
+- Dates: the app stores naive `YYYY-MM-DDTHH:mm` strings; `db.ts` persists them verbatim into `timestamptz` (UTC) and slices the first 16 chars back on read, so they round-trip unchanged.
 
 ### Testing
 - **Vitest** + **@testing-library/react** + **jsdom** for unit/component tests. `src/test/setup.ts` registers jest-dom matchers and `cleanup`. Fixtures in `src/test/fixtures.ts`.
@@ -62,12 +64,16 @@ Repo identity used for commits: `ramindusn <ramindusn@users.noreply.github.com>`
 - `.github/workflows/ci.yml`: lint + unit + build + e2e + docker build on push/PR to `main`. Concurrency-cancelled.
 - `.github/workflows/deploy.yml`: Pages deploy gated by `workflow_run` after CI succeeds — Pages never deploys directly on push.
 
-### Auth (current, interim)
-- Single hardcoded password gating "editing" mode. **The literal value is in `src/context/AuthContext.tsx`** (intentionally not duplicated here). It ships in the public JS bundle — acknowledged limitation, scheduled for removal in Supabase Phase 1 (§10).
-- `sessionStorage` holds the auth flag; closing the tab logs out.
+### Auth (Supabase magic link)
+- **Supabase Auth, passwordless magic link** gates "editing" mode (`src/context/AuthContext.tsx`). The old hardcoded password is removed.
+- `isAuthenticated` = has a session **AND** is a club admin (an admin row in `club_members`, checked via RLS). Signed-in non-admins get a "not an admin" notice and no data access.
+- Admins are bootstrapped by the `allowed_admins` allowlist + an `on auth.users insert` trigger (see migration). Add an admin = insert their email into `allowed_admins`.
+- Sessions persist + auto-refresh (Supabase default) — admins stay logged in across restarts.
+- **Email delivery:** custom SMTP via **Resend** (domain `badmintonduo.club`), configured in the Supabase dashboard (not in repo). Removes the built-in ~2–3/hour email cap.
+- **e2e bypass:** the `VITE_E2E=1` build authenticates synchronously without sending email, so Playwright can exercise the editing UI. Never set in a normal build.
 
 ### Planned additions (see §10 roadmap)
-- `@supabase/supabase-js` + Supabase Auth + Postgres.
+- ✅ `@supabase/supabase-js` + Supabase Auth + Postgres — **done** (Phase 0 + Phase 1a).
 - Possible `@tanstack/react-query` for caching.
 
 ---
@@ -99,8 +105,8 @@ docker compose up --build
 
 ### Expected green outcomes
 - `npm run lint`: no output (exit 0).
-- `npm run test`: **16 tests passing** across 2 files (`src/lib/calc.test.ts`, `src/components/StatCard.test.tsx`).
-- `npm run test:e2e`: **10 tests passing** (5 desktop + 5 mobile Pixel 5).
+- `npm run test`: **22 tests passing** across 3 files (`src/lib/calc.test.ts` 15, `src/lib/db.test.ts` 6, `src/components/StatCard.test.tsx` 1).
+- `npm run test:e2e`: **10 tests passing** (5 desktop + 5 mobile Pixel 5). The Playwright build sets `VITE_E2E=1` for the auth bypass.
 
 ---
 
@@ -239,9 +245,10 @@ If any fail, fix and re-run; never push red.
 - All record timestamps use `datetime-local`; `usageForDate` made prefix-aware.
 - Seed dates split: cash 2026-06-15 13:00; shuttles 2026-06-15 18:00; box 2026-06-16 19:00. Backwards-migration in `loadState`.
 - README + this file (AGENTS.md).
+- **Supabase Phase 0 + Phase 1a:** Postgres schema (`supabase/migrations/0001_init.sql`) — multi-club, RLS on every table, `allowed_admins` bootstrap trigger; seed (`supabase/seed.sql`); `db-push.yml` manual workflow. **Magic-link admin auth** replacing the hardcoded password. **Data layer** (`src/lib/db.ts`) hydrating/diff-syncing `AppState` to Postgres, with a localStorage fallback for tests/unconfigured builds. Custom SMTP (Resend, `badmintonduo.club`). Live project region: **West EU / Ireland (`eu-west-1`)**.
 
 ### In progress
-- (none — last shipped change was this AGENTS.md, planning Supabase Phase 0 next.)
+- (none — Supabase Phase 0 + 1a just shipped. Next: Phase 1 finish (Pages secrets + verify deployed build), then Phase 2 profiles.)
 
 ### Deferred / follow-ups (no blockers)
 - Per-attendee usage charging (currently split equally across all members; needs the sessions model from Phase 3).
@@ -291,15 +298,17 @@ If any fail, fix and re-run; never push red.
 
 ---
 
-## 11. Open questions awaiting decisions
+## 11. Decisions made (were open questions)
 
-These five must be resolved before Phase 0 can be drafted in detail:
+All five Phase-0 questions are now resolved:
 
-1. **Auth method** — magic link (recommended), email + password, or Google OAuth?
-2. **Tenancy** — single-club forever, or leave room in the schema for multiple clubs?
-3. **Migration on first login** — auto-import existing `localStorage` data, or start fresh?
-4. **Backups** — set up the weekly `pg_dump` GitHub Action in Phase 0, or defer to Phase 2?
-5. **Supabase region** — EU-West Frankfurt (default for an EU-based user), or other?
+1. **Auth method** — ✅ **Magic link** (Supabase Auth). Admins only this phase; restricted via `allowed_admins`.
+2. **Tenancy** — ✅ **Multi-club ready**: `clubs` + `club_members` + `club_id` on every domain table, RLS scoped per club. (Only one club exists today; no club-switcher UI yet.)
+3. **Migration on first login** — ✅ **Seeded the DB** directly from `seedState()` via `supabase/seed.sql`. No localStorage auto-import button was needed.
+4. **Backups** — ✅ **Deferred to Phase 2**. Supabase free tier already does daily backups.
+5. **Region** — ✅ **West EU / Ireland (`eu-west-1`)** (chosen at project creation; close enough to the intended Frankfurt default).
+
+Product direction (from the user, for later phases): **admin** role = budget + shuttle/inventory management (today's app); **player** role = own profile, ranking status, and auto-generated game-day match schedules. The schema's role layer (`club_members.role`) is the hook for this.
 
 ---
 
@@ -342,8 +351,8 @@ These five must be resolved before Phase 0 can be drafted in detail:
 - Quick math sanity check: cash 800 € − spent 785.17 € = remaining 14.83 € (before any usage).
 
 ### Test counts
-- Unit/component (vitest): **16** across `src/lib/calc.test.ts` (15) and `src/components/StatCard.test.tsx` (1).
-- E2E (Playwright): **10** = 5 desktop chromium + 5 mobile Pixel 5, in `e2e/app.spec.ts`.
+- Unit/component (vitest): **22** across `src/lib/calc.test.ts` (15), `src/lib/db.test.ts` (6) and `src/components/StatCard.test.tsx` (1).
+- E2E (Playwright): **10** = 5 desktop chromium + 5 mobile Pixel 5, in `e2e/app.spec.ts`. Auth via the `VITE_E2E=1` bypass (no real email).
 
 ### Playwright quirks worth knowing
 - `webServer` runs `npm run build && npm run preview -- --port 4173 --strictPort`.
@@ -353,8 +362,11 @@ These five must be resolved before Phase 0 can be drafted in detail:
 ### npm / build hygiene
 - `npm audit` reports a handful of vulnerabilities in transitive build tooling. Acknowledged for now; not fixed because they don't impact runtime or the public surface.
 
-### Auth password
-- Lives in `src/context/AuthContext.tsx`. **Intentionally not duplicated in this file.** It is already in the public bundle; the only mitigation is to move auth to Supabase (Phase 1).
+### Auth & secrets
+- Auth is **Supabase magic link** (`src/context/AuthContext.tsx`) — the hardcoded password is gone.
+- Client uses `VITE_SUPABASE_URL` + `VITE_SUPABASE_ANON_KEY` (the `sb_publishable_…` key). These are **public by design** — they ship in the bundle; RLS is the guard. Stored in `.env.local` (git-ignored) for dev and GitHub repo secrets (`SUPABASE_URL`/`SUPABASE_ANON_KEY`) for CI/deploy builds.
+- **Never** put the Supabase **secret key** (`sb_secret_…`), DB password, or the Resend API key in client code or any `VITE_`-prefixed var — those go in GitHub secrets / the Supabase dashboard only.
+- Repo secrets needed: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_PROJECT_REF`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`.
 
 ### Headers / primitives that other code depends on
 - `Button` has no default `type`. Forms rely on the native submit behaviour. Don't change this without auditing every form.
@@ -366,9 +378,13 @@ These five must be resolved before Phase 0 can be drafted in detail:
 | `src/App.tsx` | Layout shell. |
 | `src/types.ts` | Domain types. |
 | `src/lib/calc.ts` | Pure money/inventory math (fully unit-tested). |
-| `src/lib/storage.ts` | Persistence + `migrateSeedDates` shim. |
-| `src/context/AppContext.tsx` | All mutating actions + cascading delete logic. |
-| `src/context/AuthContext.tsx` | Current (interim) auth. |
+| `src/lib/storage.ts` | localStorage persistence + `migrateSeedDates` shim (fallback path). |
+| `src/lib/supabase.ts` | Supabase client singleton (null when env absent). |
+| `src/lib/db.ts` | Supabase data layer: `hydrate` + diff `syncState` + `emptyState`. Pure mappers unit-tested in `db.test.ts`. |
+| `src/context/AppContext.tsx` | All mutating actions + cascading delete logic. `USE_SUPABASE` picks cloud vs localStorage. |
+| `src/context/AuthContext.tsx` | Supabase magic-link auth + admin check + `VITE_E2E` bypass. |
+| `supabase/migrations/0001_init.sql` | Schema, RLS, admin-bootstrap trigger. |
+| `supabase/seed.sql` | Seed data + `allowed_admins` allowlist. |
 | `src/components/Header.tsx` | Hosts `<QuickAdd />` when authenticated. |
 | `src/components/QuickAdd.tsx` | The single transaction entry point (chooser + 3 modals). |
 | `src/components/Inventory.tsx` | Per-batch rows; Add/Edit product. |
