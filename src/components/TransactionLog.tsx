@@ -19,7 +19,7 @@ interface LogRow {
   batch?: { id: string; pricePerBarrel: number; barrels: number }
 }
 
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 const KIND_BADGE: Record<Kind, { label: string; className: string }> = {
   contribution: { label: 'Cash', className: 'bg-sky-100 text-sky-700' },
