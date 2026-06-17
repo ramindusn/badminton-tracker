@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+.git
+.github
+test-results
+playwright-report
+playwright/.cache
+blob-report
+coverage
+*.local
+*.log
+.DS_Store
+.idea
+Dockerfile
+docker-compose.yml
+README.md

@@ -1,0 +1,10 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: badminton-tracker:latest
+    container_name: badminton-tracker
+    ports:
+      - "8080:80"
+    restart: unless-stopped
