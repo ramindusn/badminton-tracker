@@ -28,7 +28,7 @@ export default function App() {
   const todayCost = usageForDate(state, todayISO()).totalCost
 
   return (
-    <div className="min-h-full px-4 py-6 sm:py-8">
+    <div className="min-h-full px-4 py-6 sm:py-8" data-testid="app-root">
       <div className="mx-auto max-w-5xl">
         <Header
           isAuthenticated={isAuthenticated}
@@ -43,6 +43,7 @@ export default function App() {
             label="Remaining Fund"
             value={euro(remaining)}
             tone={remaining >= 0 ? 'positive' : 'negative'}
+            testId="stat-remaining-fund"
           />
           <StatCard
             icon="📦"
@@ -50,12 +51,14 @@ export default function App() {
             value={String(shuttles)}
             tone={shuttles < 24 ? 'warning' : 'default'}
             hint="in stock"
+            testId="stat-total-shuttles"
           />
-          <StatCard icon="📅" label="Today's Cost" value={euro(todayCost)} />
+          <StatCard icon="📅" label="Today's Cost" value={euro(todayCost)} testId="stat-today-cost" />
           <StatCard
             icon="👥"
             label="Members"
             value={String(state.members.length)}
+            testId="stat-members"
           />
         </div>
 
@@ -79,6 +82,7 @@ export default function App() {
             <Button
               variant="ghost"
               className="text-xs text-slate-400"
+              data-testid="reset-data-button"
               onClick={() => {
                 if (confirm('Reset all data back to the original seed values?')) resetAll()
               }}

@@ -4,6 +4,7 @@ interface StatCardProps {
   icon: string
   hint?: string
   tone?: 'default' | 'positive' | 'negative' | 'warning'
+  testId?: string
 }
 
 const tones: Record<NonNullable<StatCardProps['tone']>, string> = {
@@ -13,14 +14,16 @@ const tones: Record<NonNullable<StatCardProps['tone']>, string> = {
   warning: 'text-amber-600',
 }
 
-export function StatCard({ label, value, icon, hint, tone = 'default' }: StatCardProps) {
+export function StatCard({ label, value, icon, hint, tone = 'default', testId }: StatCardProps) {
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm">
+    <div className="rounded-xl bg-white p-4 shadow-sm" data-testid={testId}>
       <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400">
         <span aria-hidden>{icon}</span>
         {label}
       </div>
-      <div className={`mt-1 text-xl font-bold ${tones[tone]}`}>{value}</div>
+      <div className={`mt-1 text-xl font-bold ${tones[tone]}`} data-testid={testId ? `${testId}-value` : undefined}>
+        {value}
+      </div>
       {hint && <div className="mt-0.5 text-xs text-slate-400">{hint}</div>}
     </div>
   )

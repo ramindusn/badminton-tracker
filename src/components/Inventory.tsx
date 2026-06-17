@@ -41,7 +41,7 @@ export function Inventory() {
       accent="border-purple-500"
       action={
         isAuthenticated ? (
-          <Button onClick={() => setEditing('new')}>+ Add product</Button>
+          <Button data-testid="add-product-button" onClick={() => setEditing('new')}>+ Add product</Button>
         ) : undefined
       }
     >

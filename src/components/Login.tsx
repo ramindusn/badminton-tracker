@@ -18,7 +18,7 @@ export function Login({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
       <p className="text-sm text-slate-500">
         Enter the password to edit the inventory and fund.
       </p>
@@ -26,6 +26,7 @@ export function Login({ onClose }: { onClose: () => void }) {
         label="Password"
         type="password"
         autoFocus
+        data-testid="login-password"
         value={password}
         onChange={(e) => {
           setPassword(e.target.value)
@@ -33,12 +34,18 @@ export function Login({ onClose }: { onClose: () => void }) {
         }}
         placeholder="••••••••"
       />
-      {error && <p className="text-sm font-medium text-red-600">Incorrect password.</p>}
+      {error && (
+        <p data-testid="login-error" className="text-sm font-medium text-red-600">
+          Incorrect password.
+        </p>
+      )}
       <div className="flex justify-end gap-2">
         <Button type="button" variant="secondary" onClick={onClose}>
           Cancel
         </Button>
-        <Button type="submit">Log in</Button>
+        <Button type="submit" data-testid="login-submit">
+          Log in
+        </Button>
       </div>
     </form>
   )

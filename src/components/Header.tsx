@@ -22,15 +22,18 @@ export function Header({ isAuthenticated, onLogin, onLogout }: HeaderProps) {
         </div>
         {isAuthenticated ? (
           <div className="flex items-center gap-2">
-            <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300">
+            <span
+              data-testid="editing-badge"
+              className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300"
+            >
               ● Editing enabled
             </span>
-            <Button variant="secondary" onClick={onLogout}>
+            <Button variant="secondary" data-testid="logout-button" onClick={onLogout}>
               Log out
             </Button>
           </div>
         ) : (
-          <Button variant="secondary" onClick={onLogin}>
+          <Button variant="secondary" data-testid="login-button" onClick={onLogin}>
             🔒 Log in to edit
           </Button>
         )}
