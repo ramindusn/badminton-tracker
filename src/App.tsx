@@ -76,8 +76,8 @@ export default function App() {
         {/* Wide tables get the full width so nothing is cramped or truncated */}
         <div className="mt-5 space-y-5">
           <Inventory />
-          <MemberBalances />
           <TransactionLog />
+          <MemberBalances />
         </div>
 
         {isAuthenticated && (
