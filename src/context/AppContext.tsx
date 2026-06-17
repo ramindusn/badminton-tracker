@@ -74,12 +74,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     USE_SUPABASE ? emptyState() : loadState(),
   )
 
-  // Supabase persistence bookkeeping. clubId is the admin's club; prevRef holds
-  // the last-synced snapshot so the persist effect can diff against it; hydrated
-  // gates writes until the initial load completes.
+  // Supabase persistence bookkeeping. clubId is the admin's club; lastSyncedRef
+  // is the snapshot actually persisted to the DB (the diff baseline); hydrated
+  // gates writes until the initial load completes. syncing/pending serialize the
+  // writes so rapid successive mutations can't race each other (see runSync).
   const clubIdRef = useRef<string | null>(null)
-  const prevRef = useRef<AppState>(state)
+  const lastSyncedRef = useRef<AppState>(state)
   const hydratedRef = useRef(false)
+  const syncingRef = useRef(false)
+  const pendingRef = useRef<AppState | null>(null)
 
   // Hydrate from Supabase when an admin signs in; clear on sign-out.
   useEffect(() => {
@@ -87,7 +90,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated) {
       hydratedRef.current = false
       clubIdRef.current = null
-      prevRef.current = emptyState()
+      lastSyncedRef.current = emptyState()
+      pendingRef.current = null
       setState(emptyState())
       return
     }
@@ -96,7 +100,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       .then((res) => {
         if (!active || !res) return
         clubIdRef.current = res.clubId
-        prevRef.current = res.state
+        lastSyncedRef.current = res.state
+        pendingRef.current = null
         hydratedRef.current = true
         setState(res.state)
       })
@@ -106,18 +111,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated])
 
-  // Persist every change: diff to Supabase when cloud-backed, else localStorage.
+  // Drain the latest pending snapshot to Supabase, one sync at a time. Diffs
+  // against lastSyncedRef (the snapshot actually persisted) and only advances
+  // that baseline after a write succeeds. Serializing is essential: without it,
+  // two rapid mutations (e.g. record a game day then delete it) spawn
+  // overlapping syncs whose writes interleave and clobber each other, leaving
+  // the DB inconsistent (e.g. stock deducted but the usage row already gone).
+  async function runSync(clubId: string): Promise<void> {
+    if (syncingRef.current) return
+    syncingRef.current = true
+    try {
+      while (pendingRef.current) {
+        const target = pendingRef.current
+        pendingRef.current = null
+        await syncState(clubId, lastSyncedRef.current, target)
+        lastSyncedRef.current = target
+      }
+    } catch (err) {
+      // Leave the failed snapshot's changes to be re-attempted by the next
+      // mutation (lastSyncedRef is unchanged, so the diff still includes them).
+      console.error('Supabase sync failed:', err)
+    } finally {
+      syncingRef.current = false
+    }
+  }
+
+  // Persist every change: queue a serialized Supabase sync when cloud-backed,
+  // else write straight to localStorage.
   useEffect(() => {
     if (USE_SUPABASE) {
       if (!hydratedRef.current || !clubIdRef.current) return
-      const prev = prevRef.current
-      prevRef.current = state
-      syncState(clubIdRef.current, prev, state).catch((err) =>
-        console.error('Supabase sync failed:', err),
-      )
+      pendingRef.current = state
+      void runSync(clubIdRef.current)
     } else {
       saveState(state)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state])
 
   function addProduct(input: NewProductInput): void {
@@ -347,7 +376,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hydrate()
         .then((res) => {
           if (!res) return
-          prevRef.current = res.state
+          lastSyncedRef.current = res.state
+          pendingRef.current = null
           setState(res.state)
         })
         .catch((err) => console.error('Supabase reload failed:', err))

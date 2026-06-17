@@ -324,6 +324,7 @@ Product direction (from the user, for later phases): **admin** role = budget + s
 - ❌ Do not run `cd <dir> && cmd` patterns in tooling; use `workdir` parameter / explicit paths.
 - ❌ Do not skip the verification gate (`lint && test && test:e2e`) before pushing — even for a "trivial" change.
 - ❌ Do not weaken Row Level Security once the Supabase schema is in place; relying only on the anon key being "secret" is wrong.
+- ❌ Do not fire Supabase writes "fire-and-forget" or advance the sync diff baseline (`lastSyncedRef`) before a write confirms. Persist must stay **serialized** via `runSync` in `AppContext` — two overlapping syncs (e.g. record a game day then delete it) race and corrupt state (stock deducted but usage row already gone). This bug shipped once; don't reintroduce it.
 
 ---
 
