@@ -106,7 +106,68 @@ export function TransactionLog() {
         <p className="py-4 text-sm text-slate-500">No transactions yet.</p>
       ) : (
         <>
-          <div className="overflow-x-auto" data-testid="transaction-log">
+          <div data-testid="transaction-log">
+            {/* Mobile: stacked cards (no horizontal scroll) */}
+            <ul className="space-y-3 sm:hidden">
+              {visible.map((r, i) => {
+                const badge = KIND_BADGE[r.kind]
+                return (
+                  <li
+                    key={`m-${r.kind}-${start + i}`}
+                    className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+                      >
+                        {badge.label}
+                      </span>
+                      <span
+                        className={`whitespace-nowrap text-sm font-bold ${
+                          r.amount >= 0 ? 'text-emerald-600' : 'text-red-500'
+                        }`}
+                      >
+                        {r.amount >= 0 ? '+' : '−'} {euro(Math.abs(r.amount))}
+                      </span>
+                    </div>
+                    <div className="mt-1.5 break-words text-sm text-slate-700">
+                      {r.label}
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-2">
+                      <span className="text-xs text-slate-400">
+                        {formatDateTime(r.date)}
+                      </span>
+                      {isAuthenticated && (
+                        <div className="flex items-center gap-1">
+                          {r.batch && (
+                            <button
+                              type="button"
+                              aria-label="Edit batch price"
+                              title="Edit batch price"
+                              onClick={() => setEditingBatch(r.batch)}
+                              className="rounded p-1 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+                            >
+                              ✎
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            aria-label="Delete entry"
+                            onClick={() => handleDelete(r)}
+                            className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                )
+              })}
+            </ul>
+
+            {/* Desktop: table */}
+            <div className="hidden overflow-x-auto sm:block">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
@@ -173,10 +234,11 @@ export function TransactionLog() {
                 })}
               </tbody>
             </table>
+            </div>
           </div>
 
           {/* Pagination */}
-          <div className="mt-4 flex items-center justify-between gap-3 text-sm text-slate-500">
+          <div className="mt-4 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
             <span data-testid="log-range">
               Showing {start + 1}–{Math.min(start + PAGE_SIZE, rows.length)} of{' '}
               {rows.length}

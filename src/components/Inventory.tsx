@@ -45,7 +45,89 @@ export function Inventory() {
         ) : undefined
       }
     >
-      <div className="overflow-x-auto">
+      {/* Mobile: stacked cards (no horizontal scroll) */}
+      <ul className="space-y-3 sm:hidden">
+        {rows.map(({ product: p, batch }, i) => {
+          const low = isLowStock(p)
+          const firstOfProduct = rows.findIndex((r) => r.product.id === p.id) === i
+          const perShuttle =
+            batch && p.shuttlesPerBarrel > 0 ? batch.pricePerBarrel / p.shuttlesPerBarrel : 0
+          return (
+            <li
+              key={(batch ? batch.id : p.id) + '-m-' + i}
+              className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+            >
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 break-words">
+                  <span className="font-semibold text-slate-800">{p.brand}</span>{' '}
+                  <span className="text-slate-500">{p.model}</span>
+                </div>
+                {firstOfProduct && low && (
+                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                    Low stock
+                  </span>
+                )}
+              </div>
+              <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-400">Barrels</dt>
+                  <dd className="text-slate-700">{batch ? batch.barrels : '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-400">€/barrel</dt>
+                  <dd className="text-slate-700">{batch ? euro(batch.pricePerBarrel) : '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-400">€/shuttle</dt>
+                  <dd className="text-slate-700">{batch ? euro(perShuttle) : '—'}</dd>
+                </div>
+                <div className="flex justify-between gap-2">
+                  <dt className="text-slate-400">Added</dt>
+                  <dd className="text-slate-500">{batch ? formatDateTime(batch.date) : '—'}</dd>
+                </div>
+                {firstOfProduct && (
+                  <>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-slate-400">Loose</dt>
+                      <dd className="text-slate-700">{p.looseShuttles}</dd>
+                    </div>
+                    <div className="flex justify-between gap-2">
+                      <dt className="text-slate-400">Total shuttles</dt>
+                      <dd className="font-semibold text-slate-800">{productShuttleCount(p)}</dd>
+                    </div>
+                  </>
+                )}
+              </dl>
+              {isAuthenticated && (
+                <div className="mt-3 flex gap-2">
+                  <Button
+                    variant="secondary"
+                    className="flex-1 py-1.5"
+                    onClick={() => setEditing(p)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    className="flex-1 py-1.5 text-red-600 hover:bg-red-50"
+                    onClick={() => {
+                      if (confirm(`Delete ${p.brand} ${p.model}?`)) deleteProduct(p.id)
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </div>
+              )}
+            </li>
+          )
+        })}
+        {rows.length === 0 && (
+          <li className="py-3 text-sm text-slate-500">No products yet.</li>
+        )}
+      </ul>
+
+      {/* Desktop: table */}
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">

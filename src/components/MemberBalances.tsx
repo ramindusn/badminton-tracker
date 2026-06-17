@@ -26,7 +26,48 @@ export function MemberBalances() {
         ) : undefined
       }
     >
-      <div className="overflow-x-auto">
+      {/* Mobile: stacked cards (no horizontal scroll) */}
+      <ul className="space-y-3 sm:hidden">
+        {balances.map((b) => (
+          <li key={b.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
+            <div className="flex items-center justify-between gap-2">
+              <span className="break-words font-semibold text-slate-800">{b.name}</span>
+              <span
+                className={`whitespace-nowrap text-sm font-bold ${
+                  b.left >= 0 ? 'text-emerald-600' : 'text-red-500'
+                }`}
+              >
+                {euro(b.left)} left
+              </span>
+            </div>
+            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
+              <div className="flex justify-between gap-2">
+                <dt className="text-slate-400">Starting</dt>
+                <dd className="text-slate-700">{euro(b.starting)}</dd>
+              </div>
+              <div className="flex justify-between gap-2">
+                <dt className="text-slate-400">Spent (split)</dt>
+                <dd className="text-slate-700">{euro(b.spent)}</dd>
+              </div>
+            </dl>
+            {isAuthenticated && (
+              <Button
+                variant="secondary"
+                className="mt-3 w-full py-1.5"
+                onClick={() => setCashFor({ id: b.id, name: b.name })}
+              >
+                + Add cash
+              </Button>
+            )}
+          </li>
+        ))}
+        {balances.length === 0 && (
+          <li className="py-3 text-sm text-slate-500">No members yet.</li>
+        )}
+      </ul>
+
+      {/* Desktop: table */}
+      <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">
