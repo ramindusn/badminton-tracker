@@ -75,10 +75,48 @@ export function loadState(): AppState {
     const parsed = JSON.parse(raw) as AppState
     // minimal shape guard
     if (!parsed.members || !parsed.products) return seedState()
-    return parsed
+    return migrateSeedDates(parsed)
   } catch {
     return seedState()
   }
+}
+
+/**
+ * Rewrites legacy records that still carry the original single seed timestamp
+ * ('2026-06-16T12:00') to the corrected per-kind timestamps. Safe to run on
+ * every load: it only touches rows whose date exactly matches the old value,
+ * so anything the user has edited or added is left untouched.
+ */
+const LEGACY_SEED_DATE = '2026-06-16T12:00'
+function migrateSeedDates(state: AppState): AppState {
+  let touched = false
+  const remap = (date: string, target: string) => {
+    if (date === LEGACY_SEED_DATE) {
+      touched = true
+      return target
+    }
+    return date
+  }
+  const next: AppState = {
+    ...state,
+    members: state.members.map((m) => ({
+      ...m,
+      contributions: m.contributions.map((c) => ({
+        ...c,
+        date: remap(c.date, cashDate),
+      })),
+    })),
+    purchases: state.purchases.map((p) => ({
+      ...p,
+      date: remap(p.date, shuttlesDate),
+    })),
+    expenses: state.expenses.map((e) => ({
+      ...e,
+      date: remap(e.date, boxDate),
+    })),
+  }
+  if (touched) saveState(next)
+  return next
 }
 
 /** Persist state to localStorage. */
