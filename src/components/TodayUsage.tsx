@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import {
   euro,
   formatDate,
+  formatDateTime,
+  nowLocalInput,
   todayISO,
   usageForDate,
   usageHistory,
@@ -26,7 +28,7 @@ export function TodayUsage() {
   function handleDeleteDay(day: { id: string; date: string; totalShuttles: number }) {
     if (
       confirm(
-        `Are you sure you want to delete this game day?\n\n${formatDate(day.date)} — ${
+        `Are you sure you want to delete this game day?\n\n${formatDateTime(day.date)} — ${
           day.totalShuttles
         } shuttles\n\nThis returns those shuttles to inventory and undoes the members' payment.`,
       )
@@ -87,7 +89,7 @@ export function TodayUsage() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="font-medium text-slate-700">
-                    {formatDate(day.date)}
+                    {formatDateTime(day.date)}
                   </div>
                   <div className="break-words text-xs text-slate-400">
                     {day.parts
@@ -141,7 +143,7 @@ function RecordUsageModal({
   onClose: () => void
   onSave: (date: string, items: { productId: string; shuttlesUsed: number }[]) => void
 }) {
-  const [date, setDate] = useState(todayISO())
+  const [date, setDate] = useState(nowLocalInput())
   const [counts, setCounts] = useState<Record<string, string>>({})
 
   function submit(e: React.FormEvent) {
@@ -157,8 +159,8 @@ function RecordUsageModal({
     <Modal open title="Record game-day usage" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
         <Field
-          label="Game day"
-          type="date"
+          label="Game day & time"
+          type="datetime-local"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />

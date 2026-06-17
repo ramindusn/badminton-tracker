@@ -122,7 +122,12 @@ export interface UsageTotals {
 
 /** Aggregate usage for a specific date (defaults to all usage). */
 export function usageForDate(state: AppState, date?: string): UsageTotals {
-  const entries = date ? state.usage.filter((u) => u.date === date) : state.usage
+  // Compare on the YYYY-MM-DD prefix so both date-only and date-time entries
+  // are matched against a date-only query.
+  const key = date ? date.slice(0, 10) : undefined
+  const entries = key
+    ? state.usage.filter((u) => u.date.slice(0, 10) === key)
+    : state.usage
   const map = new Map<string, number>()
   for (const entry of entries) {
     for (const item of entry.items) {
