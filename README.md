@@ -59,15 +59,13 @@ The multi-stage `Dockerfile` builds the static site and serves it with nginx
 
 ## Login
 
-The edit password is hardcoded in `src/context/AuthContext.tsx`:
+Editing the inventory and fund requires a password. The literal value lives in
+`src/context/AuthContext.tsx` (interim measure for a private pet project).
 
-```
-shuttle2026
-```
-
-> ⚠️ This is **not** real security — the password ships in the JS bundle. It
-> only keeps casual visitors from editing. Swap for a real auth provider when
-> you add a backend.
+> ⚠️ This is **not** real security — the password ships in the JS bundle, so
+> anyone can read it via DevTools. It only deters casual visitors from editing.
+> The hardcoded password is scheduled for removal in Supabase Phase 1
+> (see `AGENTS.md` §10), which replaces it with proper authentication.
 
 ## Continuous integration & deployment
 
