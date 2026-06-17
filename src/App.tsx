@@ -12,6 +12,7 @@ import { Header } from './components/Header'
 import { StatCard } from './components/StatCard'
 import { TodayUsage } from './components/TodayUsage'
 import { FundSummary } from './components/FundSummary'
+import { TransactionLog } from './components/TransactionLog'
 import { Inventory } from './components/Inventory'
 import { MemberBalances } from './components/MemberBalances'
 import { Login } from './components/Login'
@@ -29,7 +30,7 @@ export default function App() {
 
   return (
     <div className="min-h-full px-4 py-6 sm:py-8" data-testid="app-root">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-6xl">
         <Header
           isAuthenticated={isAuthenticated}
           onLogin={() => setLoginOpen(true)}
@@ -62,19 +63,21 @@ export default function App() {
           />
         </div>
 
-        {/* Two-column layout: main content left, fund summary right */}
+        {/* Top row: today's usage paired with the compact fund summary */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          <main className="space-y-5 lg:col-span-2">
+          <div className="lg:col-span-2">
             <TodayUsage />
-            <Inventory />
-            <MemberBalances />
-          </main>
+          </div>
+          <div className="lg:col-span-1">
+            <FundSummary />
+          </div>
+        </div>
 
-          <aside className="lg:col-span-1">
-            <div className="lg:sticky lg:top-6">
-              <FundSummary />
-            </div>
-          </aside>
+        {/* Wide tables get the full width so nothing is cramped or truncated */}
+        <div className="mt-5 space-y-5">
+          <Inventory />
+          <MemberBalances />
+          <TransactionLog />
         </div>
 
         {isAuthenticated && (

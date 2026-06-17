@@ -27,6 +27,12 @@ test('rejects an incorrect password', async ({ page }) => {
   await expect(page.getByTestId('login-error')).toBeVisible()
 })
 
+test('shows the transaction log with a record count', async ({ page }) => {
+  const log = page.getByTestId('transaction-log')
+  await expect(log).toBeVisible()
+  await expect(page.getByTestId('log-range')).toContainText('of')
+})
+
 test('logs in with the correct password and enables editing', async ({ page }) => {
   await page.getByTestId('login-button').click()
   await page.getByTestId('login-password').fill(PASSWORD)
