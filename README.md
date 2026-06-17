@@ -12,7 +12,7 @@ for free on **GitHub Pages**.
   - Inventory left (per brand/model)
   - Per-member cash balances
 - **Simple login** (hardcoded password) unlocks editing:
-  - Add / edit / restock / delete shuttle products (brand, model, cost, count)
+  - Add / edit / delete shuttle products as fixed-price purchase batches
   - Record today's shuttle usage (auto-deducts inventory & computes cost)
   - Add other expenses
   - Add new members and add cash to the shared fund
@@ -25,6 +25,8 @@ for free on **GitHub Pages**.
 - Vite + React + TypeScript
 - Tailwind CSS
 - localStorage for state
+- Vitest + Testing Library (unit/component) and Playwright (e2e)
+- Docker (nginx) and GitHub Actions CI/CD
 
 ## Getting started
 
@@ -34,6 +36,26 @@ npm run dev      # start the dev server (http://localhost:5173)
 npm run build    # type-check + production build into dist/
 npm run preview  # preview the production build locally
 ```
+
+## Testing
+
+```bash
+npm run lint       # TypeScript type-check
+npm run test       # Vitest unit & component tests
+npm run test:e2e   # Playwright end-to-end tests (builds + previews first)
+```
+
+Use `data-testid` attributes (e.g. `login-button`, `add-product-button`) as the
+stable selectors for e2e tests.
+
+## Running with Docker
+
+```bash
+docker compose up --build   # serves the app at http://localhost:8080
+```
+
+The multi-stage `Dockerfile` builds the static site and serves it with nginx
+(built with `--base=/` so it runs at the container root).
 
 ## Login
 
@@ -47,14 +69,24 @@ shuttle2026
 > only keeps casual visitors from editing. Swap for a real auth provider when
 > you add a backend.
 
+## Continuous integration & deployment
+
+Trunk-based development with `main` as the trunk:
+
+- `.github/workflows/ci.yml` runs on every push and pull request to `main`:
+  type-check, unit/component tests, production build, Playwright e2e tests, and
+  a Docker image build.
+- `.github/workflows/deploy.yml` deploys to GitHub Pages **only after CI
+  succeeds on `main`** (triggered via `workflow_run`).
+
 ## Deploying to GitHub Pages
 
 1. Create a GitHub repo named **`badminton-tracker`** and push this project.
    (The repo name must match `base` in `vite.config.ts`. If you use a
    different name, update `base: '/<repo-name>/'`.)
 2. In the repo: **Settings → Pages → Build and deployment → Source = GitHub Actions**.
-3. Push to `main`. The workflow in `.github/workflows/deploy.yml` builds and
-   deploys automatically.
+3. Push to `main`. CI runs first; once it passes, the deploy workflow builds and
+   publishes automatically.
 4. Your site will be live at:
    `https://<your-username>.github.io/badminton-tracker/`
 
@@ -80,4 +112,3 @@ src/
 
 - Real database backend (shared, multi-device)
 - Proper authentication
-- Docker, Playwright E2E tests, and GitHub Actions CI
