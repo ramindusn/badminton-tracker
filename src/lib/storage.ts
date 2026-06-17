@@ -1,13 +1,13 @@
 import type { AppState } from '../types'
 
-const STORAGE_KEY = 'badminton-tracker-state-v1'
+const STORAGE_KEY = 'badminton-tracker-state-v2'
 
 /** Generate a short unique id (good enough for a localStorage app). */
 export function uid(): string {
   return Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4)
 }
 
-const seedDate = '2026-06-16'
+const seedDate = '2026-06-16T12:00'
 
 /** Initial seed data ported from the original mock dashboard. */
 export function seedState(): AppState {
@@ -16,7 +16,6 @@ export function seedState(): AppState {
     brand: 'RSL',
     model: 'Classic Academy',
     shuttlesPerBarrel: 12,
-    costPerBarrel: 24.5,
     barrels: 20,
     looseShuttles: 0,
   }
@@ -25,7 +24,6 @@ export function seedState(): AppState {
     brand: 'Victor',
     model: 'New Carbonsonic Pro',
     shuttlesPerBarrel: 12,
-    costPerBarrel: 27.85,
     barrels: 10,
     looseShuttles: 0,
   }
@@ -42,17 +40,17 @@ export function seedState(): AppState {
         id: uid(),
         productId: rsl.id,
         barrels: 20,
-        unitCost: rsl.costPerBarrel,
+        pricePerBarrel: 24.5,
         date: seedDate,
-        note: 'Initial RSL stock',
+        note: 'Initial RSL batch',
       },
       {
         id: uid(),
         productId: victor.id,
         barrels: 10,
-        unitCost: victor.costPerBarrel,
+        pricePerBarrel: 27.85,
         date: seedDate,
-        note: 'Initial Victor stock',
+        note: 'Initial Victor batch',
       },
     ],
     usage: [],

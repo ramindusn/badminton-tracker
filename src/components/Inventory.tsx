@@ -1,19 +1,38 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-import { euro, productShuttleCount } from '../lib/calc'
-import type { Product } from '../types'
+import {
+  euro,
+  formatDateTime,
+  isLowStock,
+  nowLocalInput,
+  productShuttleCount,
+} from '../lib/calc'
+import type { Product, Purchase } from '../types'
 import { Card } from './Card'
 import { Button } from './Button'
 import { Modal } from './Modal'
 import { Field } from './Field'
 
+interface Row {
+  product: Product
+  batch: Purchase | null
+}
+
 export function Inventory() {
-  const { state, addProduct, updateProduct, restockProduct, deleteProduct } = useApp()
+  const { state, addProduct, updateProduct, deleteProduct } = useApp()
   const { isAuthenticated } = useAuth()
 
   const [editing, setEditing] = useState<Product | 'new' | null>(null)
-  const [restocking, setRestocking] = useState<Product | null>(null)
+
+  // One row per purchase batch; products without a batch still get a row.
+  const rows: Row[] = state.products.flatMap((product): Row[] => {
+    const batches = state.purchases
+      .filter((p) => p.productId === product.id)
+      .sort((a, b) => a.date.localeCompare(b.date))
+    if (batches.length === 0) return [{ product, batch: null }]
+    return batches.map((batch) => ({ product, batch }))
+  })
 
   return (
     <Card
@@ -31,60 +50,87 @@ export function Inventory() {
           <thead>
             <tr className="border-b border-slate-200 text-left text-slate-500">
               <th className="py-2 pr-3 font-medium">Product</th>
+              <th className="py-2 pr-3 font-medium">Batch barrels</th>
               <th className="py-2 pr-3 font-medium">€/barrel</th>
-              <th className="py-2 pr-3 font-medium">Barrels</th>
+              <th className="py-2 pr-3 font-medium">€/shuttle</th>
+              <th className="py-2 pr-3 font-medium">Added</th>
               <th className="py-2 pr-3 font-medium">Loose</th>
               <th className="py-2 pr-3 font-medium">Total shuttles</th>
               {isAuthenticated && <th className="py-2 font-medium">Actions</th>}
             </tr>
           </thead>
           <tbody>
-            {state.products.map((p) => (
-              <tr key={p.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="py-2 pr-3">
-                  <span className="font-semibold text-slate-800">{p.brand}</span>{' '}
-                  <span className="text-slate-500">{p.model}</span>
-                </td>
-                <td className="py-2 pr-3 text-slate-600">{euro(p.costPerBarrel)}</td>
-                <td className="py-2 pr-3 text-slate-600">{p.barrels}</td>
-                <td className="py-2 pr-3 text-slate-600">{p.looseShuttles}</td>
-                <td className="py-2 pr-3 font-semibold text-slate-800">
-                  {productShuttleCount(p)}
-                </td>
-                {isAuthenticated && (
-                  <td className="py-2">
-                    <div className="flex flex-wrap gap-1">
-                      <Button
-                        variant="ghost"
-                        className="px-2 py-1"
-                        onClick={() => setRestocking(p)}
-                      >
-                        Restock
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="px-2 py-1"
-                        onClick={() => setEditing(p)}
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="px-2 py-1 text-red-600 hover:bg-red-50"
-                        onClick={() => {
-                          if (confirm(`Delete ${p.brand} ${p.model}?`)) deleteProduct(p.id)
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
+            {rows.map(({ product: p, batch }, i) => {
+              const low = isLowStock(p)
+              // Loose / total are product-level: only show them on a product's
+              // first batch row so multi-batch products don't repeat the total.
+              const firstOfProduct = rows.findIndex((r) => r.product.id === p.id) === i
+              const perShuttle =
+                batch && p.shuttlesPerBarrel > 0
+                  ? batch.pricePerBarrel / p.shuttlesPerBarrel
+                  : 0
+              return (
+                <tr
+                  key={batch ? batch.id : p.id + '-' + i}
+                  className="border-b border-slate-100 hover:bg-slate-50"
+                >
+                  <td className="py-2 pr-3">
+                    <span className="font-semibold text-slate-800">{p.brand}</span>{' '}
+                    <span className="text-slate-500">{p.model}</span>
                   </td>
-                )}
-              </tr>
-            ))}
-            {state.products.length === 0 && (
+                  <td className="py-2 pr-3 text-slate-600">{batch ? batch.barrels : '—'}</td>
+                  <td className="py-2 pr-3 text-slate-600">
+                    {batch ? euro(batch.pricePerBarrel) : '—'}
+                  </td>
+                  <td className="py-2 pr-3 text-slate-600">{batch ? euro(perShuttle) : '—'}</td>
+                  <td className="py-2 pr-3 text-slate-500">
+                    {batch ? formatDateTime(batch.date) : '—'}
+                  </td>
+                  <td className="py-2 pr-3 text-slate-600">
+                    {firstOfProduct ? p.looseShuttles : ''}
+                  </td>
+                  <td className="py-2 pr-3">
+                    {firstOfProduct && (
+                      <>
+                        <span className="font-semibold text-slate-800">
+                          {productShuttleCount(p)}
+                        </span>
+                        {low && (
+                          <span className="ml-2 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            Low stock
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </td>
+                  {isAuthenticated && (
+                    <td className="py-2">
+                      <div className="flex flex-wrap gap-1">
+                        <Button
+                          variant="ghost"
+                          className="px-2 py-1"
+                          onClick={() => setEditing(p)}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="px-2 py-1 text-red-600 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm(`Delete ${p.brand} ${p.model}?`)) deleteProduct(p.id)
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </td>
+                  )}
+                </tr>
+              )
+            })}
+            {rows.length === 0 && (
               <tr>
-                <td colSpan={6} className="py-3 text-slate-500">
+                <td colSpan={8} className="py-3 text-slate-500">
                   No products yet.
                 </td>
               </tr>
@@ -92,6 +138,12 @@ export function Inventory() {
           </tbody>
         </table>
       </div>
+
+      <p className="mt-3 text-xs text-slate-400">
+        Each row is one purchase batch with its own fixed price and date. To add
+        more stock, use “Add product”. Loose shuttles and the barrel count can be
+        corrected with “Edit”. Batch prices are edited in the Fund Summary log.
+      </p>
 
       {editing && (
         <ProductModal
@@ -104,17 +156,6 @@ export function Inventory() {
           onUpdate={(id, data) => {
             updateProduct(id, data)
             setEditing(null)
-          }}
-        />
-      )}
-
-      {restocking && (
-        <RestockModal
-          product={restocking}
-          onClose={() => setRestocking(null)}
-          onSave={(barrels, unitCost, note) => {
-            restockProduct(restocking.id, barrels, unitCost, note)
-            setRestocking(null)
           }}
         />
       )}
@@ -134,8 +175,9 @@ function ProductModal({
     brand: string
     model: string
     shuttlesPerBarrel: number
-    costPerBarrel: number
+    pricePerBarrel: number
     barrels: number
+    when: string
   }) => void
   onUpdate: (
     id: string,
@@ -143,7 +185,6 @@ function ProductModal({
       brand: string
       model: string
       shuttlesPerBarrel: number
-      costPerBarrel: number
       barrels: number
       looseShuttles: number
     },
@@ -153,29 +194,42 @@ function ProductModal({
   const [brand, setBrand] = useState(product?.brand ?? '')
   const [model, setModel] = useState(product?.model ?? '')
   const [perBarrel, setPerBarrel] = useState(String(product?.shuttlesPerBarrel ?? 12))
-  const [cost, setCost] = useState(String(product?.costPerBarrel ?? ''))
+  const [price, setPrice] = useState('')
   const [barrels, setBarrels] = useState(String(product?.barrels ?? ''))
   const [loose, setLoose] = useState(String(product?.looseShuttles ?? 0))
+  const [when, setWhen] = useState(nowLocalInput())
+  const [error, setError] = useState('')
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!brand.trim() || !model.trim()) return
+    if (!brand.trim() || !model.trim()) {
+      setError('Brand and model are required.')
+      return
+    }
     if (isEdit) {
       onUpdate(product.id, {
         brand,
         model,
         shuttlesPerBarrel: Number(perBarrel) || 1,
-        costPerBarrel: Number(cost) || 0,
         barrels: Number(barrels) || 0,
         looseShuttles: Number(loose) || 0,
       })
     } else {
+      if (Number(barrels) <= 0) {
+        setError('Enter how many barrels you bought (at least 1).')
+        return
+      }
+      if (Number(price) <= 0) {
+        setError('Enter the price per barrel.')
+        return
+      }
       onAdd({
         brand,
         model,
         shuttlesPerBarrel: Number(perBarrel) || 1,
-        costPerBarrel: Number(cost) || 0,
+        pricePerBarrel: Number(price) || 0,
         barrels: Number(barrels) || 0,
+        when,
       })
     }
   }
@@ -185,32 +239,24 @@ function ProductModal({
       <form onSubmit={submit} className="space-y-3">
         <Field label="Brand" value={brand} onChange={(e) => setBrand(e.target.value)} autoFocus placeholder="e.g. Yonex" />
         <Field label="Model" value={model} onChange={(e) => setModel(e.target.value)} placeholder="e.g. AS-30" />
-        <div className="grid grid-cols-2 gap-3">
-          <Field
-            label="Shuttles / barrel"
-            type="number"
-            min={1}
-            value={perBarrel}
-            onChange={(e) => setPerBarrel(e.target.value)}
-          />
-          <Field
-            label="Cost / barrel (€)"
-            type="number"
-            min={0}
-            step="0.01"
-            value={cost}
-            onChange={(e) => setCost(e.target.value)}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <Field
-            label={isEdit ? 'Barrels in stock' : 'Barrels to buy'}
-            type="number"
-            min={0}
-            value={barrels}
-            onChange={(e) => setBarrels(e.target.value)}
-          />
-          {isEdit && (
+        {isEdit ? (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Shuttles / barrel"
+                type="number"
+                min={1}
+                value={perBarrel}
+                onChange={(e) => setPerBarrel(e.target.value)}
+              />
+              <Field
+                label="Barrels in stock"
+                type="number"
+                min={0}
+                value={barrels}
+                onChange={(e) => setBarrels(e.target.value)}
+              />
+            </div>
             <Field
               label="Loose shuttles"
               type="number"
@@ -218,76 +264,47 @@ function ProductModal({
               value={loose}
               onChange={(e) => setLoose(e.target.value)}
             />
-          )}
-        </div>
+          </>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                label="Barrels to buy"
+                type="number"
+                min={1}
+                value={barrels}
+                onChange={(e) => setBarrels(e.target.value)}
+              />
+              <Field
+                label="Price per barrel (€)"
+                type="number"
+                min={0}
+                step="0.01"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+              />
+            </div>
+          </>
+        )}
         <p className="text-xs text-slate-400">
           {isEdit
-            ? 'Editing counts here is a stock correction and does not change the fund. Use “Restock” to buy more and update the fund.'
-            : 'Adding a product records a purchase, so the fund will go down by barrels × cost.'}
+            ? '“Loose” = leftover shuttles that don’t fill a full barrel. Editing the barrel and loose counts is a manual stock correction and does not change the fund. To change a batch price, edit it in the Fund Summary log.'
+            : 'A new product is added as a purchase batch. The fund drops by barrels × price, and that price stays fixed for this batch. (Defaults to 12 shuttles per barrel — adjust later with Edit.)'}
         </p>
+        {!isEdit && (
+          <Field
+            label="Date & time"
+            type="datetime-local"
+            value={when}
+            onChange={(e) => setWhen(e.target.value)}
+          />
+        )}
+        {error && <p className="text-sm font-medium text-red-600">{error}</p>}
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button type="submit">{isEdit ? 'Save changes' : 'Add product'}</Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}
-
-function RestockModal({
-  product,
-  onClose,
-  onSave,
-}: {
-  product: Product
-  onClose: () => void
-  onSave: (barrels: number, unitCost: number, note?: string) => void
-}) {
-  const [barrels, setBarrels] = useState('')
-  const [unitCost, setUnitCost] = useState(String(product.costPerBarrel))
-  const [note, setNote] = useState('')
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (Number(barrels) <= 0) return
-    onSave(Number(barrels), Number(unitCost) || 0, note)
-  }
-
-  return (
-    <Modal open title={`Restock ${product.brand} ${product.model}`} onClose={onClose}>
-      <form onSubmit={submit} className="space-y-3">
-        <Field
-          label="Barrels to buy"
-          type="number"
-          min={1}
-          value={barrels}
-          onChange={(e) => setBarrels(e.target.value)}
-          autoFocus
-        />
-        <Field
-          label="Cost per barrel (€)"
-          type="number"
-          min={0}
-          step="0.01"
-          value={unitCost}
-          onChange={(e) => setUnitCost(e.target.value)}
-        />
-        <Field
-          label="Note (optional)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g. June restock"
-        />
-        <p className="text-xs text-slate-400">
-          This records a purchase: the fund drops by barrels × cost and inventory goes up.
-        </p>
-        <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">Restock</Button>
         </div>
       </form>
     </Modal>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
-import { euro, memberBalances } from '../lib/calc'
+import { euro, memberBalances, nowLocalInput } from '../lib/calc'
 import { Card } from './Card'
 import { Button } from './Button'
 import { Modal } from './Modal'
@@ -80,8 +80,8 @@ export function MemberBalances() {
       {addingMember && (
         <AddMemberModal
           onClose={() => setAddingMember(false)}
-          onSave={(name, cash) => {
-            addMember(name, cash)
+          onSave={(name, cash, when) => {
+            addMember(name, cash, when)
             setAddingMember(false)
           }}
         />
@@ -91,8 +91,8 @@ export function MemberBalances() {
         <AddCashModal
           name={cashFor.name}
           onClose={() => setCashFor(null)}
-          onSave={(amount) => {
-            addCash(cashFor.id, amount)
+          onSave={(amount, when) => {
+            addCash(cashFor.id, amount, when)
             setCashFor(null)
           }}
         />
@@ -106,15 +106,16 @@ function AddMemberModal({
   onSave,
 }: {
   onClose: () => void
-  onSave: (name: string, cash: number) => void
+  onSave: (name: string, cash: number, when: string) => void
 }) {
   const [name, setName] = useState('')
   const [cash, setCash] = useState('')
+  const [when, setWhen] = useState(nowLocalInput())
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim()) return
-    onSave(name, Number(cash) || 0)
+    onSave(name, Number(cash) || 0, when)
   }
 
   return (
@@ -136,6 +137,12 @@ function AddMemberModal({
           onChange={(e) => setCash(e.target.value)}
           placeholder="0.00"
         />
+        <Field
+          label="Date & time"
+          type="datetime-local"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
+        />
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
@@ -154,14 +161,15 @@ function AddCashModal({
 }: {
   name: string
   onClose: () => void
-  onSave: (amount: number) => void
+  onSave: (amount: number, when: string) => void
 }) {
   const [amount, setAmount] = useState('')
+  const [when, setWhen] = useState(nowLocalInput())
 
   function submit(e: React.FormEvent) {
     e.preventDefault()
     if (Number(amount) <= 0) return
-    onSave(Number(amount))
+    onSave(Number(amount), when)
   }
 
   return (
@@ -176,6 +184,12 @@ function AddCashModal({
           onChange={(e) => setAmount(e.target.value)}
           autoFocus
           placeholder="0.00"
+        />
+        <Field
+          label="Date & time"
+          type="datetime-local"
+          value={when}
+          onChange={(e) => setWhen(e.target.value)}
         />
         <p className="text-xs text-slate-400">This increases the fund and the member's starting balance.</p>
         <div className="flex justify-end gap-2 pt-1">

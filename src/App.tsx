@@ -1,7 +1,15 @@
 import { useState } from 'react'
 import { useAuth } from './context/AuthContext'
 import { useApp } from './context/AppContext'
+import {
+  euro,
+  remainingFund,
+  todayISO,
+  totalShuttlesInStock,
+  usageForDate,
+} from './lib/calc'
 import { Header } from './components/Header'
+import { StatCard } from './components/StatCard'
 import { TodayUsage } from './components/TodayUsage'
 import { FundSummary } from './components/FundSummary'
 import { Inventory } from './components/Inventory'
@@ -12,24 +20,59 @@ import { Button } from './components/Button'
 
 export default function App() {
   const { isAuthenticated, logout } = useAuth()
-  const { resetAll } = useApp()
+  const { state, resetAll } = useApp()
   const [loginOpen, setLoginOpen] = useState(false)
+
+  const remaining = remainingFund(state)
+  const shuttles = totalShuttlesInStock(state)
+  const todayCost = usageForDate(state, todayISO()).totalCost
 
   return (
     <div className="min-h-full px-4 py-6 sm:py-8">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-5xl">
         <Header
           isAuthenticated={isAuthenticated}
           onLogin={() => setLoginOpen(true)}
           onLogout={logout}
         />
 
-        <main className="space-y-5">
-          <TodayUsage />
-          <FundSummary />
-          <Inventory />
-          <MemberBalances />
-        </main>
+        {/* Quick stats */}
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <StatCard
+            icon="💰"
+            label="Remaining Fund"
+            value={euro(remaining)}
+            tone={remaining >= 0 ? 'positive' : 'negative'}
+          />
+          <StatCard
+            icon="📦"
+            label="Total Shuttles"
+            value={String(shuttles)}
+            tone={shuttles < 24 ? 'warning' : 'default'}
+            hint="in stock"
+          />
+          <StatCard icon="📅" label="Today's Cost" value={euro(todayCost)} />
+          <StatCard
+            icon="👥"
+            label="Members"
+            value={String(state.members.length)}
+          />
+        </div>
+
+        {/* Two-column layout: main content left, fund summary right */}
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+          <main className="space-y-5 lg:col-span-2">
+            <TodayUsage />
+            <Inventory />
+            <MemberBalances />
+          </main>
+
+          <aside className="lg:col-span-1">
+            <div className="lg:sticky lg:top-6">
+              <FundSummary />
+            </div>
+          </aside>
+        </div>
 
         {isAuthenticated && (
           <div className="mt-6 text-center">

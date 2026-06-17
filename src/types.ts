@@ -14,23 +14,25 @@ export interface Member {
   contributions: Contribution[]
 }
 
-/** A shuttle product: a brand + model with a per-barrel cost. */
+/** A shuttle product: a brand + model. Price is tracked per purchase batch. */
 export interface Product {
   id: string
   brand: string
   model: string
   shuttlesPerBarrel: number
-  costPerBarrel: number
   barrels: number // full barrels currently in stock
-  looseShuttles: number // leftover individual shuttles
+  looseShuttles: number // leftover individual shuttles (created by usage)
 }
 
-/** A purchase of barrels for a product (reduces the fund). */
+/**
+ * A purchase of barrels for a product = one batch.
+ * The price is fixed for the whole batch and never changes per unit.
+ */
 export interface Purchase {
   id: string
   productId: string
   barrels: number
-  unitCost: number // cost per barrel at the time of purchase
+  pricePerBarrel: number // fixed price for this batch
   date: string
   note?: string
 }

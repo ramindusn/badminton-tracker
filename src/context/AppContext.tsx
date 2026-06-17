@@ -7,43 +7,55 @@ import {
 } from 'react'
 import type { AppState, Product } from '../types'
 import { loadState, saveState, seedState, uid } from '../lib/storage'
-import { productShuttleCount } from '../lib/calc'
+import { nowLocalInput, productShuttleCount } from '../lib/calc'
 
 interface NewProductInput {
   brand: string
   model: string
   shuttlesPerBarrel: number
-  costPerBarrel: number
+  pricePerBarrel: number
   barrels: number
   note?: string
+  when?: string
 }
 
+/** Editable fields of a product (descriptive + manual stock counts, no pricing). */
 type ProductDetails = Pick<
   Product,
-  'brand' | 'model' | 'shuttlesPerBarrel' | 'costPerBarrel' | 'barrels' | 'looseShuttles'
+  'brand' | 'model' | 'shuttlesPerBarrel' | 'barrels' | 'looseShuttles'
 >
+
+/** Identifies a single deletable transaction in the fund log. */
+export type TxRef =
+  | { kind: 'contribution'; memberId: string; id: string }
+  | { kind: 'purchase'; id: string }
+  | { kind: 'expense'; id: string }
+  | { kind: 'usage'; id: string }
 
 interface AppContextValue {
   state: AppState
   // products
   addProduct: (input: NewProductInput) => void
   updateProduct: (id: string, details: ProductDetails) => void
-  restockProduct: (id: string, barrels: number, unitCost: number, note?: string) => void
   deleteProduct: (id: string) => void
+  /** Update the fixed price of an existing purchase batch. */
+  updateBatchPrice: (purchaseId: string, pricePerBarrel: number) => void
   // usage
   recordUsage: (date: string, items: { productId: string; shuttlesUsed: number }[]) => void
   // members & fund
-  addMember: (name: string, initialCash: number) => void
-  addCash: (memberId: string, amount: number) => void
-  addExpense: (description: string, amount: number) => void
+  addMember: (name: string, initialCash: number, when?: string) => void
+  addCash: (memberId: string, amount: number, when?: string) => void
+  addExpense: (description: string, amount: number, when?: string) => void
+  /** Delete any single transaction, reversing its effect on fund and inventory. */
+  deleteTransaction: (ref: TxRef) => void
   // misc
   resetAll: () => void
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined)
 
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
+function now(): string {
+  return nowLocalInput()
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
@@ -60,7 +72,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         brand: input.brand.trim(),
         model: input.model.trim(),
         shuttlesPerBarrel: input.shuttlesPerBarrel,
-        costPerBarrel: input.costPerBarrel,
         barrels: input.barrels,
         looseShuttles: 0,
       }
@@ -68,8 +79,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         id: uid(),
         productId: product.id,
         barrels: input.barrels,
-        unitCost: input.costPerBarrel,
-        date: today(),
+        pricePerBarrel: input.pricePerBarrel,
+        date: input.when || now(),
         note: input.note?.trim() || 'New product stock',
       }
       return {
@@ -90,7 +101,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
               brand: details.brand.trim(),
               model: details.model.trim(),
               shuttlesPerBarrel: details.shuttlesPerBarrel,
-              costPerBarrel: details.costPerBarrel,
               barrels: details.barrels,
               looseShuttles: details.looseShuttles,
             }
@@ -99,24 +109,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }))
   }
 
-  function restockProduct(id: string, barrels: number, unitCost: number, note?: string): void {
-    if (barrels <= 0) return
+  function updateBatchPrice(purchaseId: string, pricePerBarrel: number): void {
+    if (pricePerBarrel < 0) return
     setState((s) => ({
       ...s,
-      products: s.products.map((p) =>
-        p.id === id ? { ...p, barrels: p.barrels + barrels } : p,
+      purchases: s.purchases.map((p) =>
+        p.id === purchaseId ? { ...p, pricePerBarrel } : p,
       ),
-      purchases: [
-        ...s.purchases,
-        {
-          id: uid(),
-          productId: id,
-          barrels,
-          unitCost,
-          date: today(),
-          note: note?.trim() || 'Restock',
-        },
-      ],
     }))
   }
 
@@ -157,7 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })
   }
 
-  function addMember(name: string, initialCash: number): void {
+  function addMember(name: string, initialCash: number, when?: string): void {
     setState((s) => ({
       ...s,
       members: [
@@ -166,13 +165,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
           id: uid(),
           name: name.trim(),
           contributions:
-            initialCash > 0 ? [{ id: uid(), amount: initialCash, date: today() }] : [],
+            initialCash > 0
+              ? [{ id: uid(), amount: initialCash, date: when || now() }]
+              : [],
         },
       ],
     }))
   }
 
-  function addCash(memberId: string, amount: number): void {
+  function addCash(memberId: string, amount: number, when?: string): void {
     if (amount <= 0) return
     setState((s) => ({
       ...s,
@@ -182,7 +183,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
               ...m,
               contributions: [
                 ...m.contributions,
-                { id: uid(), amount, date: today() },
+                { id: uid(), amount, date: when || now() },
               ],
             }
           : m,
@@ -190,15 +191,98 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }))
   }
 
-  function addExpense(description: string, amount: number): void {
+  function addExpense(description: string, amount: number, when?: string): void {
     if (amount <= 0) return
     setState((s) => ({
       ...s,
       expenses: [
         ...s.expenses,
-        { id: uid(), description: description.trim(), amount, date: today() },
+        { id: uid(), description: description.trim(), amount, date: when || now() },
       ],
     }))
+  }
+
+  /**
+   * Delete any single transaction and reverse its effect so the fund and
+   * inventory stay consistent:
+   *  - contribution → removes the member's cash (fund down)
+   *  - expense      → removes the expense (fund up)
+   *  - purchase     → removes the batch and its barrels from stock (fund up,
+   *                   stock down); if it was the product's last batch, the
+   *                   product (its inventory row) is removed entirely
+   *  - usage        → removes the usage and returns those shuttles to stock
+   *                   (fund down because the members' payment is undone)
+   */
+  function deleteTransaction(ref: TxRef): void {
+    setState((s) => {
+      switch (ref.kind) {
+        case 'contribution':
+          return {
+            ...s,
+            members: s.members.map((m) =>
+              m.id === ref.memberId
+                ? { ...m, contributions: m.contributions.filter((c) => c.id !== ref.id) }
+                : m,
+            ),
+          }
+        case 'expense':
+          return { ...s, expenses: s.expenses.filter((e) => e.id !== ref.id) }
+        case 'purchase': {
+          const purchase = s.purchases.find((p) => p.id === ref.id)
+          const purchases = s.purchases.filter((p) => p.id !== ref.id)
+          if (!purchase) return { ...s, purchases }
+          // Does the product still have any batches left after this delete?
+          const hasRemainingBatch = purchases.some(
+            (p) => p.productId === purchase.productId,
+          )
+          if (!hasRemainingBatch) {
+            // Last batch removed → drop the product (its inventory row) and any
+            // usage entries that referenced it, so nothing lingers as "—".
+            return {
+              ...s,
+              purchases,
+              products: s.products.filter((p) => p.id !== purchase.productId),
+              usage: s.usage
+                .map((u) => ({
+                  ...u,
+                  items: u.items.filter((i) => i.productId !== purchase.productId),
+                }))
+                .filter((u) => u.items.length > 0),
+            }
+          }
+          // Other batches remain → just remove this batch's barrels from stock.
+          return {
+            ...s,
+            purchases,
+            products: s.products.map((p) =>
+              p.id === purchase.productId
+                ? { ...p, barrels: Math.max(0, p.barrels - purchase.barrels) }
+                : p,
+            ),
+          }
+        }
+        case 'usage': {
+          const entry = s.usage.find((u) => u.id === ref.id)
+          const products = entry
+            ? s.products.map((p) => {
+                const item = entry.items.find((i) => i.productId === p.id)
+                if (!item) return p
+                const total = productShuttleCount(p) + item.shuttlesUsed
+                return {
+                  ...p,
+                  barrels: Math.floor(total / p.shuttlesPerBarrel),
+                  looseShuttles: total % p.shuttlesPerBarrel,
+                }
+              })
+            : s.products
+          return {
+            ...s,
+            products,
+            usage: s.usage.filter((u) => u.id !== ref.id),
+          }
+        }
+      }
+    })
   }
 
   function resetAll(): void {
@@ -211,12 +295,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         state,
         addProduct,
         updateProduct,
-        restockProduct,
         deleteProduct,
+        updateBatchPrice,
         recordUsage,
         addMember,
         addCash,
         addExpense,
+        deleteTransaction,
         resetAll,
       }}
     >
