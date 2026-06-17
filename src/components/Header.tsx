@@ -1,4 +1,5 @@
 import { Button } from './Button'
+import { QuickAdd } from './QuickAdd'
 
 interface HeaderProps {
   isAuthenticated: boolean
@@ -21,13 +22,14 @@ export function Header({ isAuthenticated, onLogin, onLogout }: HeaderProps) {
           <p className="text-sm text-slate-300">{dateLabel}</p>
         </div>
         {isAuthenticated ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
             <span
               data-testid="editing-badge"
               className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300"
             >
               ● Editing enabled
             </span>
+            <QuickAdd />
             <Button variant="secondary" data-testid="logout-button" onClick={onLogout}>
               Log out
             </Button>
