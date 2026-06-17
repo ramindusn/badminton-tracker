@@ -9,7 +9,7 @@ export function uid(): string {
 
 const cashDate = '2026-06-15T13:00'
 const shuttlesDate = '2026-06-15T18:00'
-const boxDate = '2026-06-17T19:00'
+const boxDate = '2026-06-16T19:00'
 
 /** Initial seed data ported from the original mock dashboard. */
 export function seedState(): AppState {
@@ -90,8 +90,8 @@ export function loadState(): AppState {
 const LEGACY_SEED_DATE = '2026-06-16T12:00'
 function migrateSeedDates(state: AppState): AppState {
   let touched = false
-  const remap = (date: string, target: string) => {
-    if (date === LEGACY_SEED_DATE) {
+  const remap = (date: string, target: string, legacy: string = LEGACY_SEED_DATE) => {
+    if (date === legacy) {
       touched = true
       return target
     }
@@ -112,7 +112,9 @@ function migrateSeedDates(state: AppState): AppState {
     })),
     expenses: state.expenses.map((e) => ({
       ...e,
-      date: remap(e.date, boxDate),
+      // First migrate from the original single seed date, then correct the
+      // previously-wrong box date (17 Jun 19:00) to its real value (16 Jun 19:00).
+      date: remap(remap(e.date, boxDate), boxDate, '2026-06-17T19:00'),
     })),
   }
   if (touched) saveState(next)
