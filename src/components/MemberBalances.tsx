@@ -29,35 +29,45 @@ export function MemberBalances() {
       {/* Mobile: stacked cards (no horizontal scroll) */}
       <ul className="space-y-3 sm:hidden">
         {balances.map((b) => (
-          <li key={b.id} className="rounded-lg border border-slate-100 bg-slate-50 p-3">
-            <div className="flex items-center justify-between gap-2">
+          <li
+            key={b.id}
+            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+          >
+            {/* Header: name + remaining balance */}
+            <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2">
               <span className="break-words font-semibold text-slate-800">{b.name}</span>
               <span
-                className={`whitespace-nowrap text-sm font-bold ${
+                className={`whitespace-nowrap text-base font-bold ${
                   b.left >= 0 ? 'text-emerald-600' : 'text-red-500'
                 }`}
               >
-                {euro(b.left)} left
+                {euro(b.left)}
               </span>
             </div>
-            <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
-              <div className="flex justify-between gap-2">
-                <dt className="text-slate-400">Starting</dt>
-                <dd className="text-slate-700">{euro(b.starting)}</dd>
+            {/* Body: divided rows */}
+            <dl className="divide-y divide-slate-100 px-3 text-sm">
+              <div className="flex items-baseline justify-between gap-3 py-1.5">
+                <dt className="text-xs uppercase tracking-wide text-slate-400">Starting</dt>
+                <dd className="font-medium text-slate-700">{euro(b.starting)}</dd>
               </div>
-              <div className="flex justify-between gap-2">
-                <dt className="text-slate-400">Spent (split)</dt>
-                <dd className="text-slate-700">{euro(b.spent)}</dd>
+              <div className="flex items-baseline justify-between gap-3 py-1.5">
+                <dt className="text-xs uppercase tracking-wide text-slate-400">
+                  Spent (split)
+                </dt>
+                <dd className="font-medium text-slate-700">{euro(b.spent)}</dd>
               </div>
             </dl>
+            {/* Footer: action */}
             {isAuthenticated && (
-              <Button
-                variant="secondary"
-                className="mt-3 w-full py-1.5"
-                onClick={() => setCashFor({ id: b.id, name: b.name })}
-              >
-                + Add cash
-              </Button>
+              <div className="border-t border-slate-100 bg-slate-50 px-3 py-2">
+                <Button
+                  variant="secondary"
+                  className="w-full py-1.5"
+                  onClick={() => setCashFor({ id: b.id, name: b.name })}
+                >
+                  + Add cash
+                </Button>
+              </div>
             )}
           </li>
         ))}

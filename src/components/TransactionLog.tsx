@@ -114,27 +114,30 @@ export function TransactionLog() {
                 return (
                   <li
                     key={`m-${r.kind}-${start + i}`}
-                    className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                    className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
                   >
-                    <div className="flex items-center justify-between gap-2">
+                    {/* Header: type + amount */}
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2">
                       <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${badge.className}`}
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${badge.className}`}
                       >
                         {badge.label}
                       </span>
                       <span
-                        className={`whitespace-nowrap text-sm font-bold ${
+                        className={`whitespace-nowrap text-base font-bold ${
                           r.amount >= 0 ? 'text-emerald-600' : 'text-red-500'
                         }`}
                       >
                         {r.amount >= 0 ? '+' : '−'} {euro(Math.abs(r.amount))}
                       </span>
                     </div>
-                    <div className="mt-1.5 break-words text-sm text-slate-700">
+                    {/* Body: description */}
+                    <div className="break-words px-3 py-2.5 text-sm leading-snug text-slate-700">
                       {r.label}
                     </div>
-                    <div className="mt-1.5 flex items-center justify-between gap-2">
-                      <span className="text-xs text-slate-400">
+                    {/* Footer: date + actions */}
+                    <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-3 py-1.5">
+                      <span className="text-xs text-slate-500">
                         {formatDateTime(r.date)}
                       </span>
                       {isAuthenticated && (

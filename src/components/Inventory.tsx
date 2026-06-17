@@ -55,51 +55,44 @@ export function Inventory() {
           return (
             <li
               key={(batch ? batch.id : p.id) + '-m-' + i}
-              className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+              className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
             >
-              <div className="flex items-start justify-between gap-2">
+              {/* Header: product + low-stock badge */}
+              <div className="flex items-start justify-between gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2">
                 <div className="min-w-0 break-words">
                   <span className="font-semibold text-slate-800">{p.brand}</span>{' '}
                   <span className="text-slate-500">{p.model}</span>
                 </div>
                 {firstOfProduct && low && (
-                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                  <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
                     Low stock
                   </span>
                 )}
               </div>
-              <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-sm">
-                <div className="flex justify-between gap-2">
-                  <dt className="text-slate-400">Barrels</dt>
-                  <dd className="text-slate-700">{batch ? batch.barrels : '—'}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-slate-400">€/barrel</dt>
-                  <dd className="text-slate-700">{batch ? euro(batch.pricePerBarrel) : '—'}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-slate-400">€/shuttle</dt>
-                  <dd className="text-slate-700">{batch ? euro(perShuttle) : '—'}</dd>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <dt className="text-slate-400">Added</dt>
-                  <dd className="text-slate-500">{batch ? formatDateTime(batch.date) : '—'}</dd>
-                </div>
+              {/* Body: batch + stock details, one per row with dividers */}
+              <dl className="divide-y divide-slate-100 px-3 text-sm">
+                <Row label="Barrels" value={batch ? String(batch.barrels) : '—'} />
+                <Row label="€ / barrel" value={batch ? euro(batch.pricePerBarrel) : '—'} />
+                <Row label="€ / shuttle" value={batch ? euro(perShuttle) : '—'} />
+                <Row
+                  label="Added"
+                  value={batch ? formatDateTime(batch.date) : '—'}
+                  muted
+                />
                 {firstOfProduct && (
                   <>
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-slate-400">Loose</dt>
-                      <dd className="text-slate-700">{p.looseShuttles}</dd>
-                    </div>
-                    <div className="flex justify-between gap-2">
-                      <dt className="text-slate-400">Total shuttles</dt>
-                      <dd className="font-semibold text-slate-800">{productShuttleCount(p)}</dd>
-                    </div>
+                    <Row label="Loose shuttles" value={String(p.looseShuttles)} />
+                    <Row
+                      label="Total shuttles"
+                      value={String(productShuttleCount(p))}
+                      emphasis
+                    />
                   </>
                 )}
               </dl>
+              {/* Footer: actions */}
               {isAuthenticated && (
-                <div className="mt-3 flex gap-2">
+                <div className="flex gap-2 border-t border-slate-100 bg-slate-50 px-3 py-2">
                   <Button
                     variant="secondary"
                     className="flex-1 py-1.5"
@@ -242,6 +235,35 @@ export function Inventory() {
         />
       )}
     </Card>
+  )
+}
+
+function Row({
+  label,
+  value,
+  muted = false,
+  emphasis = false,
+}: {
+  label: string
+  value: string
+  muted?: boolean
+  emphasis?: boolean
+}) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 py-1.5">
+      <dt className="text-xs uppercase tracking-wide text-slate-400">{label}</dt>
+      <dd
+        className={`text-right ${
+          emphasis
+            ? 'text-base font-bold text-slate-800'
+            : muted
+              ? 'text-slate-500'
+              : 'font-medium text-slate-700'
+        }`}
+      >
+        {value}
+      </dd>
+    </div>
   )
 }
 
