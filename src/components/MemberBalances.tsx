@@ -8,10 +8,9 @@ import { Modal } from './Modal'
 import { Field } from './Field'
 
 export function MemberBalances() {
-  const { state, addMember, addCash } = useApp()
+  const { state, addMember } = useApp()
   const { isAuthenticated } = useAuth()
   const [addingMember, setAddingMember] = useState(false)
-  const [cashFor, setCashFor] = useState<{ id: string; name: string } | null>(null)
 
   const balances = memberBalances(state)
 
@@ -45,7 +44,7 @@ export function MemberBalances() {
               </span>
             </div>
             {/* Body: divided rows */}
-            <dl className="divide-y divide-slate-100 px-3 text-sm">
+            <dl className="divide-y divide-slate-100 px-3 pb-2 text-sm">
               <div className="flex items-baseline justify-between gap-3 py-1.5">
                 <dt className="text-xs uppercase tracking-wide text-slate-400">Starting</dt>
                 <dd className="font-medium text-slate-700">{euro(b.starting)}</dd>
@@ -57,18 +56,6 @@ export function MemberBalances() {
                 <dd className="font-medium text-slate-700">{euro(b.spent)}</dd>
               </div>
             </dl>
-            {/* Footer: action */}
-            {isAuthenticated && (
-              <div className="border-t border-slate-100 bg-slate-50 px-3 py-2">
-                <Button
-                  variant="secondary"
-                  className="w-full py-1.5"
-                  onClick={() => setCashFor({ id: b.id, name: b.name })}
-                >
-                  + Add cash
-                </Button>
-              </div>
-            )}
           </li>
         ))}
         {balances.length === 0 && (
@@ -85,7 +72,6 @@ export function MemberBalances() {
               <th className="py-2 pr-3 font-medium">Starting</th>
               <th className="py-2 pr-3 font-medium">Spent (split)</th>
               <th className="py-2 pr-3 font-medium">Left</th>
-              {isAuthenticated && <th className="py-2 font-medium">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -101,22 +87,11 @@ export function MemberBalances() {
                 >
                   {euro(b.left)}
                 </td>
-                {isAuthenticated && (
-                  <td className="py-2">
-                    <Button
-                      variant="ghost"
-                      className="px-2 py-1"
-                      onClick={() => setCashFor({ id: b.id, name: b.name })}
-                    >
-                      + Add cash
-                    </Button>
-                  </td>
-                )}
               </tr>
             ))}
             {balances.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-3 text-slate-500">
+                <td colSpan={4} className="py-3 text-slate-500">
                   No members yet.
                 </td>
               </tr>
@@ -125,7 +100,8 @@ export function MemberBalances() {
         </table>
       </div>
       <p className="mt-3 text-xs text-slate-400">
-        Spending is split equally across all current members.
+        Spending is split equally across all current members. Record incoming cash via
+        <span className="font-medium"> + Add transaction</span> in the header.
       </p>
 
       {addingMember && (
@@ -134,17 +110,6 @@ export function MemberBalances() {
           onSave={(name, cash, when) => {
             addMember(name, cash, when)
             setAddingMember(false)
-          }}
-        />
-      )}
-
-      {cashFor && (
-        <AddCashModal
-          name={cashFor.name}
-          onClose={() => setCashFor(null)}
-          onSave={(amount, when) => {
-            addCash(cashFor.id, amount, when)
-            setCashFor(null)
           }}
         />
       )}
@@ -205,51 +170,3 @@ function AddMemberModal({
   )
 }
 
-function AddCashModal({
-  name,
-  onClose,
-  onSave,
-}: {
-  name: string
-  onClose: () => void
-  onSave: (amount: number, when: string) => void
-}) {
-  const [amount, setAmount] = useState('')
-  const [when, setWhen] = useState(nowLocalInput())
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    if (Number(amount) <= 0) return
-    onSave(Number(amount), when)
-  }
-
-  return (
-    <Modal open title={`Add cash for ${name}`} onClose={onClose}>
-      <form onSubmit={submit} className="space-y-3">
-        <Field
-          label="Amount (€)"
-          type="number"
-          min={0}
-          step="0.01"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          autoFocus
-          placeholder="0.00"
-        />
-        <Field
-          label="Date & time"
-          type="datetime-local"
-          value={when}
-          onChange={(e) => setWhen(e.target.value)}
-        />
-        <p className="text-xs text-slate-400">This increases the fund and the member's starting balance.</p>
-        <div className="flex justify-end gap-2 pt-1">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit">Add cash</Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}

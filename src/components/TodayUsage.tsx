@@ -1,25 +1,18 @@
-import { useState } from 'react'
 import { useApp } from '../context/AppContext'
 import { useAuth } from '../context/AuthContext'
 import {
   euro,
   formatDate,
   formatDateTime,
-  nowLocalInput,
   todayISO,
   usageForDate,
   usageHistory,
 } from '../lib/calc'
-import type { Product } from '../types'
 import { Card } from './Card'
-import { Button } from './Button'
-import { Modal } from './Modal'
-import { Field } from './Field'
 
 export function TodayUsage() {
-  const { state, recordUsage, deleteTransaction } = useApp()
+  const { state, deleteTransaction } = useApp()
   const { isAuthenticated } = useAuth()
-  const [open, setOpen] = useState(false)
 
   const today = todayISO()
   const totals = usageForDate(state, today)
@@ -38,16 +31,7 @@ export function TodayUsage() {
   }
 
   return (
-    <Card
-      title="Game-day Usage"
-      icon="📅"
-      accent="border-amber-400"
-      action={
-        isAuthenticated ? (
-          <Button onClick={() => setOpen(true)}>+ Record game-day usage</Button>
-        ) : undefined
-      }
-    >
+    <Card title="Game-day Usage" icon="📅" accent="border-amber-400">
       {/* Today's tally */}
       <div className="rounded-lg bg-amber-50 p-4">
         <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
@@ -78,7 +62,10 @@ export function TodayUsage() {
         </h3>
         {history.length === 0 ? (
           <p className="text-sm text-slate-400">
-            No game days logged yet. {isAuthenticated ? 'Record one above.' : ''}
+            No game days logged yet.
+            {isAuthenticated
+              ? ' Use + Add transaction in the header to log one.'
+              : ''}
           </p>
         ) : (
           <ul className="space-y-2">
@@ -119,77 +106,6 @@ export function TodayUsage() {
           </ul>
         )}
       </div>
-
-      {open && (
-        <RecordUsageModal
-          products={state.products}
-          onClose={() => setOpen(false)}
-          onSave={(date, items) => {
-            recordUsage(date, items)
-            setOpen(false)
-          }}
-        />
-      )}
     </Card>
-  )
-}
-
-function RecordUsageModal({
-  products,
-  onClose,
-  onSave,
-}: {
-  products: Product[]
-  onClose: () => void
-  onSave: (date: string, items: { productId: string; shuttlesUsed: number }[]) => void
-}) {
-  const [date, setDate] = useState(nowLocalInput())
-  const [counts, setCounts] = useState<Record<string, string>>({})
-
-  function submit(e: React.FormEvent) {
-    e.preventDefault()
-    const items = products.map((p) => ({
-      productId: p.id,
-      shuttlesUsed: Number(counts[p.id] ?? 0),
-    }))
-    onSave(date, items)
-  }
-
-  return (
-    <Modal open title="Record game-day usage" onClose={onClose}>
-      <form onSubmit={submit} className="space-y-4">
-        <Field
-          label="Game day & time"
-          type="datetime-local"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        {products.map((p) => (
-          <Field
-            key={p.id}
-            label={`${p.brand} ${p.model} — shuttles used`}
-            type="number"
-            min={0}
-            value={counts[p.id] ?? ''}
-            onChange={(e) => setCounts((c) => ({ ...c, [p.id]: e.target.value }))}
-            placeholder="0"
-          />
-        ))}
-        {products.length === 0 && (
-          <p className="text-sm text-slate-500">Add a product first.</p>
-        )}
-        <p className="text-xs text-slate-400">
-          Shuttles used are deducted from stock. Cost is split equally across members.
-        </p>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={products.length === 0}>
-            Save usage
-          </Button>
-        </div>
-      </form>
-    </Modal>
   )
 }
