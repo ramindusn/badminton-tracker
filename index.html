@@ -16,12 +16,9 @@
       // mode. Mirrors src/lib/theme.ts (kept in sync deliberately).
       (function () {
         try {
-          var m = localStorage.getItem('badminton-tracker-theme') || 'system'
-          var dark =
-            m === 'dark' ||
-            (m === 'system' &&
-              window.matchMedia('(prefers-color-scheme: dark)').matches)
-          if (dark) document.documentElement.classList.add('dark')
+          if (localStorage.getItem('badminton-tracker-theme') === 'dark') {
+            document.documentElement.classList.add('dark')
+          }
         } catch (e) {}
       })()
     </script>
