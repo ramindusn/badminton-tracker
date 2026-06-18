@@ -6,6 +6,9 @@ dist-ssr
 # Local env (.env.local is covered by *.local; ignore plain .env too)
 .env
 
+# Local DB snapshots/backups (contain real fund data — keep out of the public repo)
+/backups
+
 .DS_Store
 .idea
 *.log

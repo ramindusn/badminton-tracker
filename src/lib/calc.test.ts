@@ -153,6 +153,25 @@ describe('memberBalances', () => {
     expect(balances[0]).toMatchObject({ name: 'A', starting: 200, spent: 25, left: 175 })
     expect(balances[1]).toMatchObject({ name: 'B', starting: 100, spent: 25, left: 75 })
   })
+
+  it('credits game-day usage income against the split and reconciles with the fund', () => {
+    const product = makeProduct({ id: 'p1', shuttlesPerBarrel: 12 })
+    const state = makeState({
+      members: [
+        makeMember({ id: 'm1', name: 'A', contributions: [{ id: 'c1', amount: 200, date: '2026-01-01' }] }),
+        makeMember({ id: 'm2', name: 'B', contributions: [{ id: 'c2', amount: 200, date: '2026-01-01' }] }),
+      ],
+      products: [product],
+      purchases: [makePurchase({ productId: 'p1', barrels: 1, pricePerBarrel: 24 })], // spent 24
+      usage: [{ id: 'u1', date: '2026-01-02', items: [{ productId: 'p1', shuttlesUsed: 6 }] }], // income 6*2 = 12
+    })
+    // net spent = 24 − 12 = 12; split across 2 = 6 each
+    const balances = memberBalances(state)
+    expect(balances[0]).toMatchObject({ starting: 200, spent: 6, left: 194 })
+    // member balances always sum to the remaining fund
+    const sumLeft = balances.reduce((s, b) => s + b.left, 0)
+    expect(sumLeft).toBeCloseTo(remainingFund(state))
+  })
 })
 
 describe('usageForDate', () => {

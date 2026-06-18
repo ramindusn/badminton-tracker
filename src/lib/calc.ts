@@ -97,12 +97,15 @@ export interface MemberBalance {
 }
 
 /**
- * Per-member balances. Spending is split equally across all current members.
+ * Per-member balances. **Net** spending — stock + expenses minus game-day usage
+ * income — is split equally across all current members. Crediting usage income
+ * keeps the balances summing to the remaining fund, so logging a game day is
+ * reflected in every member's `left`.
  */
 export function memberBalances(state: AppState): MemberBalance[] {
-  const spent = totalSpent(state)
+  const netSpent = totalSpent(state) - totalUsageIncome(state)
   const count = state.members.length || 1
-  const share = spent / count
+  const share = netSpent / count
   return state.members.map((m) => {
     const starting = m.contributions.reduce((s, c) => s + c.amount, 0)
     return {

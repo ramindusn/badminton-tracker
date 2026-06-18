@@ -100,8 +100,9 @@ export function MemberBalances() {
         </table>
       </div>
       <p className="mt-3 text-xs text-slate-400">
-        Spending is split equally across all current members. Record incoming cash via
-        <span className="font-medium"> + Add transaction</span> in the header.
+        Spending — net of game-day usage income — is split equally across all current
+        members, so these balances always add up to the remaining fund. Record incoming
+        cash via <span className="font-medium"> + Add transaction</span> in the header.
       </p>
 
       {addingMember && (
