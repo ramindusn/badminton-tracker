@@ -2,11 +2,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// base must match the GitHub repo name for GitHub Pages.
-// Repo: badminton-tracker  ->  served at https://<user>.github.io/badminton-tracker/
+// Served at the root of the custom domain (badmintonduo.club) via GitHub Pages,
+// so the base is '/'. The CNAME file in public/ pins the custom domain.
 export default defineConfig({
   plugins: [react()],
-  base: '/badminton-tracker/',
+  base: '/',
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',

@@ -73,9 +73,8 @@ schema and wiring live under `supabase/`:
 1. Create a free Supabase project in an EU region (this project uses
    **West EU — Ireland / `eu-west-1`**).
 2. **Auth → Providers → Email**: enable it and turn on magic links. Set the
-   **Site URL** and **Redirect URLs** to the Pages URL
-   (`https://ramindusn.github.io/badminton-tracker/`) and, for local dev,
-   `http://localhost:5173/badminton-tracker/`.
+   **Site URL** to `https://badmintonduo.club` and add **Redirect URLs**
+   `https://badmintonduo.club/**` and, for local dev, `http://localhost:5173/`.
 3. Install the CLI: `brew install supabase/tap/supabase`.
 4. Add these **repo secrets** (Settings → Secrets and variables → Actions):
    `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_PROJECT_REF`,
@@ -117,14 +116,14 @@ Trunk-based development with `main` as the trunk:
 
 ## Deploying to GitHub Pages
 
-1. Create a GitHub repo named **`badminton-tracker`** and push this project.
-   (The repo name must match `base` in `vite.config.ts`. If you use a
-   different name, update `base: '/<repo-name>/'`.)
-2. In the repo: **Settings → Pages → Build and deployment → Source = GitHub Actions**.
-3. Push to `main`. CI runs first; once it passes, the deploy workflow builds and
+1. **Settings → Pages → Build and deployment → Source = GitHub Actions**.
+2. Push to `main`. CI runs first; once it passes, the deploy workflow builds and
    publishes automatically.
-4. Your site will be live at:
-   `https://<your-username>.github.io/badminton-tracker/`
+3. **Custom domain:** the site is served at **`https://badmintonduo.club/`**.
+   `public/CNAME` carries the domain into the Pages artifact, and Vite uses
+   `base: '/'` (root). DNS is at Porkbun: an `ALIAS` on the apex →
+   `ramindusn.github.io`. The old `*.github.io/badminton-tracker/` URL redirects
+   to the custom domain.
 
 ## Project structure
 

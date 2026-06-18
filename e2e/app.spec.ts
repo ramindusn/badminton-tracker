@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 
-const APP_URL = '/badminton-tracker/'
+const APP_URL = '/'
 
 test.beforeEach(async ({ page }) => {
   await page.goto(APP_URL)

@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
 const PORT = 4173
-const BASE_PATH = '/badminton-tracker/'
+const BASE_PATH = '/'
 
 /**
  * Playwright runs against a production build served by `vite preview`,

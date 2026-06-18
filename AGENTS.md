@@ -25,7 +25,7 @@ The project doubles as a learning sandbox for full-cycle web + DevOps work (Vite
 
 | Thing | Value |
 |---|---|
-| Live site (GitHub Pages) | `https://ramindusn.github.io/badminton-tracker/` |
+| Live site (custom domain) | `https://badmintonduo.club/` (GitHub Pages + Porkbun DNS; `public/CNAME` pins it) |
 | GitHub repo (public) | `https://github.com/ramindusn/badminton-tracker` |
 | Local Git remote | `origin` |
 | SSH alias (personal account) | `github-personal` → `git@github-personal:ramindusn/badminton-tracker.git` |
@@ -172,7 +172,7 @@ If any fail, fix and re-run; never push red.
 | 6.13 | **`usageForDate` compares on `YYYY-MM-DD` prefix** | Backwards-compatible with legacy date-only entries while supporting new datetime entries. |
 | 6.14 | **Fund Summary grouped into "Money in" / "Money out" with subtotals** | Game-day usage income is visually unmistakable as inbound money, not buried in a single line. |
 | 6.15 | **GitHub Pages deploy gated via `workflow_run`** | Pages only deploys after CI succeeds on `main`; broken builds can't ship. |
-| 6.16 | **Docker build uses `--base=/`** | Container serves at root; Pages serves under `/badminton-tracker/`. Same artifact, two base paths. |
+| 6.16 | **Vite `base: '/'`; Docker also builds `--base=/`** | Since moving to the custom domain `badmintonduo.club`, Pages serves at root too — so app, container, and dev all use base `/`. `public/CNAME` pins the domain in the Pages artifact. |
 | 6.17 | **Member spending split equally** across *all current members* in `memberBalances` | Simplest sensible default. Per-attendee charging is deferred to Phase 3 (sessions). |
 | 6.18 | **`migrateSeedDates` shim runs on every load**, idempotent, only touches rows whose date *exactly* matches a known legacy value | Lets us correct seed mistakes without forcing a Reset. Anything user-edited is preserved. |
 | 6.19 | **Two SSH identities cleanly separated**: office key `~/.ssh/macbook-pro-rb` for `Host github.com`; personal key `~/.ssh/id_ed25519_personal_github` for `Host github-personal` (`IdentitiesOnly yes`) | Office work and this repo never cross-pollinate Git identities. |
@@ -337,7 +337,7 @@ Product direction (from the user, for later phases): **admin** role = budget + s
 - Per-repo Git identity: `ramindusn <ramindusn@users.noreply.github.com>` (configured locally; office identity is global default).
 
 ### Live + container URLs
-- Live (Pages): `https://ramindusn.github.io/badminton-tracker/`.
+- Live (custom domain): `https://badmintonduo.club/`. Vite `base: '/'` (root); `public/CNAME` carries the domain into the Pages artifact. Old `ramindusn.github.io/badminton-tracker/` now redirects here.
 - Local Docker: `http://localhost:8080` (`docker compose up --build`).
 - Vite dev: typically `http://localhost:5173/badminton-tracker/`.
 - Playwright preview: `http://localhost:4173/badminton-tracker/`.
