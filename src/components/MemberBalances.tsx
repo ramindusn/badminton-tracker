@@ -18,7 +18,6 @@ export function MemberBalances() {
     <Card
       title="Member Balances (Cash)"
       icon="👥"
-      accent="border-red-500"
       action={
         isAuthenticated ? (
           <Button onClick={() => setAddingMember(true)}>+ Add member</Button>
@@ -30,11 +29,11 @@ export function MemberBalances() {
         {balances.map((b) => (
           <li
             key={b.id}
-            className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+            className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm"
           >
             {/* Header: name + remaining balance */}
-            <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2">
-              <span className="break-words font-semibold text-slate-800">{b.name}</span>
+            <div className="flex items-center justify-between gap-2 border-b border-line bg-surface-muted px-3 py-2">
+              <span className="break-words font-semibold text-fg">{b.name}</span>
               <span
                 className={`whitespace-nowrap text-base font-bold ${
                   b.left >= 0 ? 'text-emerald-600' : 'text-red-500'
@@ -44,22 +43,22 @@ export function MemberBalances() {
               </span>
             </div>
             {/* Body: divided rows */}
-            <dl className="divide-y divide-slate-100 px-3 pb-2 text-sm">
+            <dl className="divide-y divide-line px-3 pb-2 text-sm">
               <div className="flex items-baseline justify-between gap-3 py-1.5">
-                <dt className="text-xs uppercase tracking-wide text-slate-400">Starting</dt>
-                <dd className="font-medium text-slate-700">{euro(b.starting)}</dd>
+                <dt className="text-xs uppercase tracking-wide text-fg-subtle">Starting</dt>
+                <dd className="font-medium text-fg">{euro(b.starting)}</dd>
               </div>
               <div className="flex items-baseline justify-between gap-3 py-1.5">
-                <dt className="text-xs uppercase tracking-wide text-slate-400">
+                <dt className="text-xs uppercase tracking-wide text-fg-subtle">
                   Spent (split)
                 </dt>
-                <dd className="font-medium text-slate-700">{euro(b.spent)}</dd>
+                <dd className="font-medium text-fg">{euro(b.spent)}</dd>
               </div>
             </dl>
           </li>
         ))}
         {balances.length === 0 && (
-          <li className="py-3 text-sm text-slate-500">No members yet.</li>
+          <li className="py-3 text-sm text-fg-muted">No members yet.</li>
         )}
       </ul>
 
@@ -67,7 +66,7 @@ export function MemberBalances() {
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-slate-500">
+            <tr className="border-b border-line text-left text-fg-muted">
               <th className="py-2 pr-3 font-medium">Member</th>
               <th className="py-2 pr-3 font-medium">Starting</th>
               <th className="py-2 pr-3 font-medium">Spent (split)</th>
@@ -76,10 +75,10 @@ export function MemberBalances() {
           </thead>
           <tbody>
             {balances.map((b) => (
-              <tr key={b.id} className="border-b border-slate-100 hover:bg-slate-50">
-                <td className="py-2 pr-3 font-semibold text-slate-800">{b.name}</td>
-                <td className="py-2 pr-3 text-slate-600">{euro(b.starting)}</td>
-                <td className="py-2 pr-3 text-slate-600">{euro(b.spent)}</td>
+              <tr key={b.id} className="border-b border-line hover:bg-surface-muted">
+                <td className="py-2 pr-3 font-semibold text-fg">{b.name}</td>
+                <td className="py-2 pr-3 text-fg-muted">{euro(b.starting)}</td>
+                <td className="py-2 pr-3 text-fg-muted">{euro(b.spent)}</td>
                 <td
                   className={`py-2 pr-3 font-bold ${
                     b.left >= 0 ? 'text-emerald-600' : 'text-red-500'
@@ -91,7 +90,7 @@ export function MemberBalances() {
             ))}
             {balances.length === 0 && (
               <tr>
-                <td colSpan={4} className="py-3 text-slate-500">
+                <td colSpan={4} className="py-3 text-fg-muted">
                   No members yet.
                 </td>
               </tr>
@@ -99,7 +98,7 @@ export function MemberBalances() {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-fg-subtle">
         Spending — net of game-day usage income — is split equally across all current
         members, so these balances always add up to the remaining fund. Record incoming
         cash via <span className="font-medium"> + Add transaction</span> in the header.

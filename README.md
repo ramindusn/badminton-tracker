@@ -32,5 +32,6 @@ npm run lint && npm run test && npm run test:e2e
 ## Docs
 
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** — setup, the PR flow, and conventions.
+- **[docs/ROADMAP.md](docs/ROADMAP.md)** — where the project is and what's left.
 - **[AGENTS.md](AGENTS.md)** — architecture, decisions, roadmap, and ops (Supabase, deploy, DNS).
 - **`supabase/`** — database schema + seed.

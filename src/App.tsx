@@ -56,12 +56,12 @@ export default function App() {
         )}
 
         {/* Quick stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
           <StatCard
             icon="💰"
             label="Remaining Fund"
             value={euro(remaining)}
-            tone={remaining >= 0 ? 'positive' : 'negative'}
+            tone={remaining >= 0 ? 'accent' : 'negative'}
             testId="stat-remaining-fund"
           />
           <StatCard
@@ -88,7 +88,7 @@ export default function App() {
         </div>
 
         {/* Top row: today's usage paired with the compact fund summary */}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2">
             <TodayUsage />
           </div>
@@ -98,7 +98,7 @@ export default function App() {
         </div>
 
         {/* Wide tables get the full width so nothing is cramped or truncated */}
-        <div className="mt-5 space-y-5">
+        <div className="mt-6 space-y-6">
           <Inventory />
           <TransactionLog />
           <MemberBalances />
@@ -108,7 +108,7 @@ export default function App() {
           <div className="mt-6 text-center">
             <Button
               variant="ghost"
-              className="text-xs text-slate-400"
+              className="text-xs text-fg-subtle"
               data-testid="reset-data-button"
               onClick={() => {
                 if (confirm('Reset all data back to the original seed values?')) resetAll()
@@ -119,7 +119,7 @@ export default function App() {
           </div>
         )}
 
-        <footer className="mt-8 text-center text-xs text-slate-400">
+        <footer className="mt-8 text-center text-xs text-fg-subtle">
           {cloudBacked
             ? 'Synced to the cloud database. 🏸 Pet project.'
             : 'Data is stored locally in your browser. 🏸 Pet project.'}

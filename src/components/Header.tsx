@@ -1,5 +1,6 @@
 import { Button } from './Button'
 import { QuickAdd } from './QuickAdd'
+import { ThemeToggle } from './ThemeToggle'
 
 interface HeaderProps {
   isAuthenticated: boolean
@@ -15,30 +16,33 @@ export function Header({ isAuthenticated, onLogin, onLogout }: HeaderProps) {
   })
 
   return (
-    <header className="mb-6 rounded-xl bg-slate-800 px-6 py-5 text-white shadow-md">
+    <header className="mb-6 rounded-2xl border border-line bg-surface px-6 py-5 shadow-sm">
       <div className="flex flex-col items-center gap-3 text-center sm:flex-row sm:justify-between sm:text-left">
         <div>
-          <h1 className="text-xl font-bold sm:text-2xl">🏸 Budget &amp; Shuttle Update</h1>
-          <p className="text-sm text-slate-300">{dateLabel}</p>
+          <h1 className="text-xl font-bold text-fg sm:text-2xl">🏸 Budget &amp; Shuttle Update</h1>
+          <p className="text-sm text-fg-muted">{dateLabel}</p>
         </div>
-        {isAuthenticated ? (
-          <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
-            <span
-              data-testid="editing-badge"
-              className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-300"
-            >
-              ● Editing enabled
-            </span>
-            <QuickAdd />
-            <Button variant="secondary" data-testid="logout-button" onClick={onLogout}>
-              Log out
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+          <ThemeToggle />
+          {isAuthenticated ? (
+            <>
+              <span
+                data-testid="editing-badge"
+                className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600"
+              >
+                ● Editing enabled
+              </span>
+              <QuickAdd />
+              <Button variant="secondary" data-testid="logout-button" onClick={onLogout}>
+                Log out
+              </Button>
+            </>
+          ) : (
+            <Button variant="secondary" data-testid="login-button" onClick={onLogin}>
+              🔒 Log in to edit
             </Button>
-          </div>
-        ) : (
-          <Button variant="secondary" data-testid="login-button" onClick={onLogin}>
-            🔒 Log in to edit
-          </Button>
-        )}
+          )}
+        </div>
       </div>
     </header>
   )

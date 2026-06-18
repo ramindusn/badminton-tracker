@@ -3,28 +3,45 @@ interface StatCardProps {
   value: string
   icon: string
   hint?: string
-  tone?: 'default' | 'positive' | 'negative' | 'warning'
+  tone?: 'default' | 'accent' | 'positive' | 'negative' | 'warning'
   testId?: string
 }
 
-const tones: Record<NonNullable<StatCardProps['tone']>, string> = {
-  default: 'text-slate-800',
-  positive: 'text-emerald-600',
-  negative: 'text-red-500',
-  warning: 'text-amber-600',
+const tones: Record<NonNullable<StatCardProps['tone']>, { value: string; chip: string }> = {
+  default: { value: 'text-fg', chip: 'bg-surface-muted' },
+  accent: { value: 'text-accent', chip: 'bg-teal-50' },
+  positive: { value: 'text-emerald-600', chip: 'bg-emerald-50' },
+  negative: { value: 'text-red-500', chip: 'bg-red-50' },
+  warning: { value: 'text-amber-600', chip: 'bg-amber-50' },
 }
 
 export function StatCard({ label, value, icon, hint, tone = 'default', testId }: StatCardProps) {
+  const t = tones[tone]
   return (
-    <div className="rounded-xl bg-white p-4 shadow-sm" data-testid={testId}>
-      <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-        <span aria-hidden>{icon}</span>
-        {label}
+    <div
+      className="rounded-2xl border border-line bg-surface p-4 shadow-sm sm:p-5"
+      data-testid={testId}
+    >
+      <div className="flex items-center gap-3">
+        <span
+          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg ${t.chip}`}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <div className="text-xs font-medium uppercase tracking-wide text-fg-subtle">
+            {label}
+          </div>
+          <div
+            className={`mt-0.5 text-2xl font-bold leading-tight ${t.value}`}
+            data-testid={testId ? `${testId}-value` : undefined}
+          >
+            {value}
+          </div>
+          {hint && <div className="text-xs text-fg-subtle">{hint}</div>}
+        </div>
       </div>
-      <div className={`mt-1 text-xl font-bold ${tones[tone]}`} data-testid={testId ? `${testId}-value` : undefined}>
-        {value}
-      </div>
-      {hint && <div className="mt-0.5 text-xs text-slate-400">{hint}</div>}
     </div>
   )
 }

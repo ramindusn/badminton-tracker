@@ -15,7 +15,9 @@ A single-page web app to track a small badminton group's shared shuttle inventor
 - On game days, members "pay" the fund the cost of the shuttles they actually used (computed from the weighted-average cost per shuttle).
 - The app shows: current inventory, fund summary, member balances, today's usage, and a paginated transaction log.
 
-Current user base: **~4 friends** (single club, no multi-tenancy). It is a personal/pet project, not a commercial product. Sensitive-data exposure is acceptable at this scale.
+Current user base: **a small group of friends** (single club, no multi-tenancy). Membership is **dynamic, not fixed** — `members` is a list and the group can grow; today it's ~4 people but nothing is hardcoded to that count. It is a personal/pet project, not a commercial product. Sensitive-data exposure is acceptable at this scale.
+
+**Direction:** beyond the shuttle/fund tracker, the app will bring **game-day data in-house** — sessions, attendance, and **doubles** match results — then derive an **individual ranking from doubles outcomes** (the group plays doubles primarily). See §10 Phases 3–5.
 
 The project doubles as a learning sandbox for full-cycle web + DevOps work (Vite + React + TS, testing pyramid, Docker, GitHub Actions CI/CD, and — planned — Supabase + Postgres).
 
@@ -105,7 +107,7 @@ docker compose up --build
 
 ### Expected green outcomes
 - `npm run lint`: no output (exit 0).
-- `npm run test`: **22 tests passing** across 3 files (`src/lib/calc.test.ts` 15, `src/lib/db.test.ts` 6, `src/components/StatCard.test.tsx` 1).
+- `npm run test`: **23 tests passing** across 3 files (`src/lib/calc.test.ts` 16, `src/lib/db.test.ts` 6, `src/components/StatCard.test.tsx` 1).
 - `npm run test:e2e`: **10 tests passing** (5 desktop + 5 mobile Pixel 5). The Playwright build sets `VITE_E2E=1` for the auth bypass.
 
 ---
@@ -247,9 +249,10 @@ If any fail, fix and re-run; never push red.
 - Seed dates split: cash 2026-06-15 13:00; shuttles 2026-06-15 18:00; box 2026-06-16 19:00. Backwards-migration in `loadState`.
 - README + this file (AGENTS.md).
 - **Supabase Phase 0 + Phase 1a:** Postgres schema (`supabase/migrations/0001_init.sql`) — multi-club, RLS on every table, `allowed_admins` bootstrap trigger; seed (`supabase/seed.sql`); `db-push.yml` manual workflow. **Magic-link admin auth** replacing the hardcoded password. **Data layer** (`src/lib/db.ts`) hydrating/diff-syncing `AppState` to Postgres, with a localStorage fallback for tests/unconfigured builds. Custom SMTP (Resend, `badmintonduo.club`). Live project region: **West EU / Ireland (`eu-west-1`)**.
+- **Phase 1 finish:** ✅ deployed `badmintonduo.club` build verified end-to-end against the live Supabase project (magic-link admin sign-in + data hydrate/sync round-trip confirmed). CI + deploy both inject `VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY` into the build. Phase 1 closed; **Phase 2 (profiles) is next.**
 
 ### In progress
-- (none — Supabase Phase 0 + 1a just shipped. Next: Phase 1 finish (Pages secrets + verify deployed build), then Phase 2 profiles.)
+- (none — **Phase 1 is complete**: the live `badmintonduo.club` build is verified talking to Supabase (auth + data round-trip confirmed). Next up: **Phase 2 profiles**.)
 
 ### Deferred / follow-ups (no blockers)
 - Per-attendee usage charging (currently split equally across all members; needs the sessions model from Phase 3).
@@ -270,7 +273,7 @@ If any fail, fix and re-run; never push red.
 - Add GitHub Actions `workflow_dispatch` job to run `supabase db push` (manual gate at first).
 - New repo secrets: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_DB_PASSWORD`.
 
-### Phase 1 — Auth + data layer
+### Phase 1 — Auth + data layer ✅ DONE
 - Add `@supabase/supabase-js`.
 - New `src/lib/supabase.ts` client singleton from env vars.
 - Refactor `src/lib/storage.ts` → `src/lib/db.ts` keeping the existing public surface but persisting via Supabase. Keep localStorage as a read-through cache only.
@@ -282,13 +285,17 @@ If any fail, fix and re-run; never push red.
 - `profiles` table linked to `auth.users`. Display name + avatar (Supabase Storage).
 - Members can be linked to a profile or remain as guest entries.
 
-### Phase 3 — Sessions + attendance
+### Phase 3 — Sessions + attendance (game-day data comes in-house)
 - `sessions`, `session_attendees`. Usage becomes per-session and charges only attendees — unlocks the deferred per-member usage charging.
+- This is where game-day data starts living in the app rather than anywhere external.
 
-### Phase 4 — Matches + scores
-- `matches` table (singles/doubles, team_a/b, scores). Score entry UI.
+### Phase 4 — Matches + scores (doubles-first)
+- `matches` table. The group plays **doubles primarily**, so the schema is doubles-native: `team_a` / `team_b` each reference two players, plus per-game scores. (Singles can be a degenerate case — one player per side — but doubles is the design centre.) Score entry UI.
 
-### Phase 5 — Ranking
+### Phase 5 — Ranking (individual, derived from doubles)
+- **Goal:** an **individual** rating even though matches are 2v2. The rating system must attribute a shared team result back to each player — open modelling choices to pin down here:
+  - Opponent strength = combined/average rating of the two opponents; both teammates updated from the same match.
+  - Whether/how to credit partner strength (partners rotate vs. fixed pairs changes fairness a lot).
 - Glicko-2 (preferred) or Elo via a Postgres trigger maintaining a `member_ratings` table on each `matches` insert/update. Leaderboard component on the SPA.
 
 ### Phase 6 — Match generation
@@ -353,7 +360,7 @@ Product direction (from the user, for later phases): **admin** role = budget + s
 - Quick math sanity check: cash 800 € − spent 785.17 € = remaining 14.83 € (before any usage).
 
 ### Test counts
-- Unit/component (vitest): **22** across `src/lib/calc.test.ts` (15), `src/lib/db.test.ts` (6) and `src/components/StatCard.test.tsx` (1).
+- Unit/component (vitest): **23** across `src/lib/calc.test.ts` (16), `src/lib/db.test.ts` (6) and `src/components/StatCard.test.tsx` (1).
 - E2E (Playwright): **10** = 5 desktop chromium + 5 mobile Pixel 5, in `e2e/app.spec.ts`. Auth via the `VITE_E2E=1` bypass (no real email).
 
 ### Playwright quirks worth knowing

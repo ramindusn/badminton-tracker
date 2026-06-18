@@ -34,7 +34,7 @@ export function QuickAdd() {
         <Modal open title="What kind of transaction?" onClose={() => setChooserOpen(false)}>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <ChoiceCard
-              accent="sky"
+              accent="teal"
               title="Cash in"
               subtitle="Money received from a member"
               onClick={() => pick('cash')}
@@ -52,7 +52,7 @@ export function QuickAdd() {
               onClick={() => pick('usage')}
             />
           </div>
-          <p className="mt-3 text-xs text-slate-400">
+          <p className="mt-3 text-xs text-fg-subtle">
             Buying shuttles? Use <span className="font-medium">Add product</span> in the
             Inventory card so the batch price is tracked.
           </p>
@@ -72,18 +72,18 @@ function ChoiceCard({
   subtitle,
   onClick,
 }: {
-  accent: 'sky' | 'amber' | 'emerald'
+  accent: 'teal' | 'amber' | 'emerald'
   title: string
   subtitle: string
   onClick: () => void
 }) {
   const accents = {
-    sky: 'border-sky-200 hover:border-sky-400 hover:bg-sky-50',
-    amber: 'border-amber-200 hover:border-amber-400 hover:bg-amber-50',
-    emerald: 'border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50',
+    teal: 'border-teal-200 hover:border-teal-400 hover:bg-teal-50 dark:hover:bg-teal-500/10',
+    amber: 'border-amber-200 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-500/10',
+    emerald: 'border-emerald-200 hover:border-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-500/10',
   } as const
   const dots = {
-    sky: 'bg-sky-500',
+    teal: 'bg-teal-500',
     amber: 'bg-amber-500',
     emerald: 'bg-emerald-500',
   } as const
@@ -91,13 +91,13 @@ function ChoiceCard({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-lg border-2 bg-white p-3 text-left transition ${accents[accent]}`}
+      className={`rounded-lg border-2 bg-surface p-3 text-left transition ${accents[accent]}`}
     >
       <div className="flex items-center gap-2">
         <span className={`h-2 w-2 rounded-full ${dots[accent]}`} />
-        <span className="font-semibold text-slate-800">{title}</span>
+        <span className="font-semibold text-fg">{title}</span>
       </div>
-      <p className="mt-1 text-xs text-slate-500">{subtitle}</p>
+      <p className="mt-1 text-xs text-fg-muted">{subtitle}</p>
     </button>
   )
 }
@@ -119,9 +119,9 @@ function CashModal({ onClose }: { onClose: () => void }) {
     <Modal open title="Cash in from member" onClose={onClose}>
       <form onSubmit={submit} className="space-y-3">
         <label className="block text-sm">
-          <span className="mb-1 block text-slate-600">Member</span>
+          <span className="mb-1 block text-fg-muted">Member</span>
           <select
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="w-full rounded-md border border-line bg-surface px-3 py-2 text-sm"
             value={memberId}
             onChange={(e) => setMemberId(e.target.value)}
           >
@@ -149,7 +149,7 @@ function CashModal({ onClose }: { onClose: () => void }) {
           value={when}
           onChange={(e) => setWhen(e.target.value)}
         />
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-subtle">
           Increases the fund and the member's starting balance.
         </p>
         <div className="flex justify-end gap-2 pt-1">
@@ -203,7 +203,7 @@ function ExpenseModal({ onClose }: { onClose: () => void }) {
           value={when}
           onChange={(e) => setWhen(e.target.value)}
         />
-        <p className="text-xs text-slate-400">Decreases the fund.</p>
+        <p className="text-xs text-fg-subtle">Decreases the fund.</p>
         <div className="flex justify-end gap-2 pt-1">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancel
@@ -252,9 +252,9 @@ function UsageModal({ onClose }: { onClose: () => void }) {
           />
         ))}
         {state.products.length === 0 && (
-          <p className="text-sm text-slate-500">Add a product first in Inventory.</p>
+          <p className="text-sm text-fg-muted">Add a product first in Inventory.</p>
         )}
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-subtle">
           Members are charged for the shuttles used. Increases the fund.
         </p>
         <div className="flex justify-end gap-2 pt-1">

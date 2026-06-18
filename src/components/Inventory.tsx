@@ -38,7 +38,6 @@ export function Inventory() {
     <Card
       title="Inventory Left"
       icon="📦"
-      accent="border-purple-500"
       action={
         isAuthenticated ? (
           <Button data-testid="add-product-button" onClick={() => setEditing('new')}>+ Add product</Button>
@@ -55,13 +54,13 @@ export function Inventory() {
           return (
             <li
               key={(batch ? batch.id : p.id) + '-m-' + i}
-              className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+              className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm"
             >
               {/* Header: product + low-stock badge */}
-              <div className="flex items-start justify-between gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2">
+              <div className="flex items-start justify-between gap-2 border-b border-line bg-surface-muted px-3 py-2">
                 <div className="min-w-0 break-words">
-                  <span className="font-semibold text-slate-800">{p.brand}</span>{' '}
-                  <span className="text-slate-500">{p.model}</span>
+                  <span className="font-semibold text-fg">{p.brand}</span>{' '}
+                  <span className="text-fg-muted">{p.model}</span>
                 </div>
                 {firstOfProduct && low && (
                   <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-700">
@@ -70,7 +69,7 @@ export function Inventory() {
                 )}
               </div>
               {/* Body: batch + stock details, one per row with dividers */}
-              <dl className="divide-y divide-slate-100 px-3 text-sm">
+              <dl className="divide-y divide-line px-3 text-sm">
                 <Row label="Barrels" value={batch ? String(batch.barrels) : '—'} />
                 <Row label="€ / barrel" value={batch ? euro(batch.pricePerBarrel) : '—'} />
                 <Row label="€ / shuttle" value={batch ? euro(perShuttle) : '—'} />
@@ -92,7 +91,7 @@ export function Inventory() {
               </dl>
               {/* Footer: actions */}
               {isAuthenticated && (
-                <div className="flex gap-2 border-t border-slate-100 bg-slate-50 px-3 py-2">
+                <div className="flex gap-2 border-t border-line bg-surface-muted px-3 py-2">
                   <Button
                     variant="secondary"
                     className="flex-1 py-1.5"
@@ -115,7 +114,7 @@ export function Inventory() {
           )
         })}
         {rows.length === 0 && (
-          <li className="py-3 text-sm text-slate-500">No products yet.</li>
+          <li className="py-3 text-sm text-fg-muted">No products yet.</li>
         )}
       </ul>
 
@@ -123,7 +122,7 @@ export function Inventory() {
       <div className="hidden overflow-x-auto sm:block">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-slate-500">
+            <tr className="border-b border-line text-left text-fg-muted">
               <th className="py-2 pr-3 font-medium">Product</th>
               <th className="py-2 pr-3 font-medium">Batch barrels</th>
               <th className="py-2 pr-3 font-medium">€/barrel</th>
@@ -147,27 +146,27 @@ export function Inventory() {
               return (
                 <tr
                   key={batch ? batch.id : p.id + '-' + i}
-                  className="border-b border-slate-100 hover:bg-slate-50"
+                  className="border-b border-line hover:bg-surface-muted"
                 >
                   <td className="py-2 pr-3">
-                    <span className="font-semibold text-slate-800">{p.brand}</span>{' '}
-                    <span className="text-slate-500">{p.model}</span>
+                    <span className="font-semibold text-fg">{p.brand}</span>{' '}
+                    <span className="text-fg-muted">{p.model}</span>
                   </td>
-                  <td className="py-2 pr-3 text-slate-600">{batch ? batch.barrels : '—'}</td>
-                  <td className="py-2 pr-3 text-slate-600">
+                  <td className="py-2 pr-3 text-fg-muted">{batch ? batch.barrels : '—'}</td>
+                  <td className="py-2 pr-3 text-fg-muted">
                     {batch ? euro(batch.pricePerBarrel) : '—'}
                   </td>
-                  <td className="py-2 pr-3 text-slate-600">{batch ? euro(perShuttle) : '—'}</td>
-                  <td className="py-2 pr-3 text-slate-500">
+                  <td className="py-2 pr-3 text-fg-muted">{batch ? euro(perShuttle) : '—'}</td>
+                  <td className="py-2 pr-3 text-fg-muted">
                     {batch ? formatDateTime(batch.date) : '—'}
                   </td>
-                  <td className="py-2 pr-3 text-slate-600">
+                  <td className="py-2 pr-3 text-fg-muted">
                     {firstOfProduct ? p.looseShuttles : ''}
                   </td>
                   <td className="py-2 pr-3">
                     {firstOfProduct && (
                       <>
-                        <span className="font-semibold text-slate-800">
+                        <span className="font-semibold text-fg">
                           {productShuttleCount(p)}
                         </span>
                         {low && (
@@ -205,7 +204,7 @@ export function Inventory() {
             })}
             {rows.length === 0 && (
               <tr>
-                <td colSpan={8} className="py-3 text-slate-500">
+                <td colSpan={8} className="py-3 text-fg-muted">
                   No products yet.
                 </td>
               </tr>
@@ -214,7 +213,7 @@ export function Inventory() {
         </table>
       </div>
 
-      <p className="mt-3 text-xs text-slate-400">
+      <p className="mt-3 text-xs text-fg-subtle">
         Each row is one purchase batch with its own fixed price and date. To add
         more stock, use “Add product”. Loose shuttles and the barrel count can be
         corrected with “Edit”. Batch prices are edited in the Fund Summary log.
@@ -251,14 +250,14 @@ function Row({
 }) {
   return (
     <div className="flex items-baseline justify-between gap-3 py-1.5">
-      <dt className="text-xs uppercase tracking-wide text-slate-400">{label}</dt>
+      <dt className="text-xs uppercase tracking-wide text-fg-subtle">{label}</dt>
       <dd
         className={`text-right ${
           emphasis
-            ? 'text-base font-bold text-slate-800'
+            ? 'text-base font-bold text-fg'
             : muted
-              ? 'text-slate-500'
-              : 'font-medium text-slate-700'
+              ? 'text-fg-muted'
+              : 'font-medium text-fg'
         }`}
       >
         {value}
@@ -390,7 +389,7 @@ function ProductModal({
             </div>
           </>
         )}
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-subtle">
           {isEdit
             ? '“Loose” = leftover shuttles that don’t fill a full barrel. Editing the barrel and loose counts is a manual stock correction and does not change the fund. To change a batch price, edit it in the Fund Summary log.'
             : 'A new product is added as a purchase batch. The fund drops by barrels × price, and that price stays fixed for this batch. (Defaults to 12 shuttles per barrel — adjust later with Edit.)'}
