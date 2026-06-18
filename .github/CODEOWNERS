@@ -1,0 +1,4 @@
+# Default reviewer for every change. With the `main` ruleset's "Require review
+# from Code Owners" rule, this makes the owner's approval required on contributor
+# PRs and auto-requests their review on every PR.
+* @ramindusn

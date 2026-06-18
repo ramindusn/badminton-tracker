@@ -130,10 +130,11 @@ Always be explicit which mode you are in. Switch to build only when the user say
   - `refactor: remove duplicate transaction entry points`
   - `docs(agents): add AGENTS.md to bootstrap future agent sessions`
 
-### 5.3 Trunk-based dev
-- Single long-lived branch: `main`.
-- No PRs for solo work — commit straight to `main` after the verification gate passes.
-- Branch protection is **not** configured (deferred follow-up — see §9).
+### 5.3 Branching & PRs
+- Single long-lived branch: `main`, protected by a ruleset.
+- **Contributors:** branch → PR → CI (3 checks) must pass + Code-Owner review from `@ramindusn` → merge. **No direct pushes to `main`.**
+- **Owner (`@ramindusn`):** on the ruleset bypass list — may push straight to `main` after the verification gate, or open a PR.
+- `.github/CODEOWNERS` (`* @ramindusn`) auto-requests the owner's review on every PR; `.github/pull_request_template.md` carries the gate checklist.
 
 ### 5.4 Verification gate (mandatory before any push)
 Before every push, run **all three**:
@@ -254,7 +255,7 @@ If any fail, fix and re-run; never push red.
 - Per-attendee usage charging (currently split equally across all members; needs the sessions model from Phase 3).
 - Header polish on very narrow screens (badge/buttons can crowd at < ~360px).
 - Transaction log: type filters, full-text search, CSV export, month grouping.
-- Branch protection on `main` requiring CI checks.
+- ✅ Branch protection on `main` (PR + CI checks + Code-Owner review; owner bypass) — done; see §5.3.
 - `npm install` reports vulnerabilities in build tooling — left as-is for a pet project.
 
 ---
