@@ -7,6 +7,14 @@ export function emptyState(): AppState {
   return { members: [], products: [], purchases: [], usage: [], expenses: [] }
 }
 
+/** Club membership tallies for the dashboard (admins are also players). */
+export interface RoleCounts {
+  admins: number
+  players: number
+}
+
+export const emptyRoleCounts: RoleCounts = { admins: 0, players: 0 }
+
 // ---- date mapping ----------------------------------------------------------
 // The app stores naive local wall-clock strings ('YYYY-MM-DDTHH:mm') and never
 // does timezone math (it only slices to a date and sorts lexically). We persist
@@ -78,7 +86,11 @@ type Row = Record<string, unknown>
  * Load the admin's club state from Supabase. Returns null when the user has no
  * admin club membership (RLS then yields no data anyway).
  */
-export async function hydrate(): Promise<{ clubId: string; state: AppState } | null> {
+export async function hydrate(): Promise<{
+  clubId: string
+  state: AppState
+  roleCounts: RoleCounts
+} | null> {
   if (!supabase) return null
 
   const { data: memberships, error: mErr } = await supabase
@@ -89,16 +101,31 @@ export async function hydrate(): Promise<{ clubId: string; state: AppState } | n
   if (mErr || !memberships || memberships.length === 0) return null
   const clubId = memberships[0].club_id as string
 
-  const [members, contributions, products, purchases, usageEntries, usageItems, expenses] =
-    await Promise.all([
-      select(supabase, 'members', clubId),
-      select(supabase, 'contributions'),
-      select(supabase, 'products', clubId),
-      select(supabase, 'purchases', clubId),
-      select(supabase, 'usage_entries', clubId),
-      select(supabase, 'usage_items'),
-      select(supabase, 'expenses', clubId),
-    ])
+  const [
+    members,
+    contributions,
+    products,
+    purchases,
+    usageEntries,
+    usageItems,
+    expenses,
+    clubMembers,
+  ] = await Promise.all([
+    select(supabase, 'members', clubId),
+    select(supabase, 'contributions'),
+    select(supabase, 'products', clubId),
+    select(supabase, 'purchases', clubId),
+    select(supabase, 'usage_entries', clubId),
+    select(supabase, 'usage_items'),
+    select(supabase, 'expenses', clubId),
+    select(supabase, 'club_members', clubId),
+  ])
+
+  // Admins are also players, so the player count is every club member.
+  const roleCounts: RoleCounts = {
+    admins: clubMembers.filter((m) => m.role === 'admin').length,
+    players: clubMembers.length,
+  }
 
   const contribByMember = new Map<string, Row[]>()
   for (const c of contributions) {
@@ -154,7 +181,7 @@ export async function hydrate(): Promise<{ clubId: string; state: AppState } | n
       date: fromDbDate(e.occurred_at as string),
     })),
   }
-  return { clubId, state }
+  return { clubId, state, roleCounts }
 }
 
 async function select(client: SupabaseClient, table: string, clubId?: string): Promise<Row[]> {

@@ -8,7 +8,7 @@ import {
 } from 'react'
 import type { AppState, Product } from '../types'
 import { loadState, saveState, seedState, uid } from '../lib/storage'
-import { emptyState, hydrate, syncState } from '../lib/db'
+import { emptyState, emptyRoleCounts, hydrate, syncState, type RoleCounts } from '../lib/db'
 import { isSupabaseConfigured } from '../lib/supabase'
 import { useAuth } from './AuthContext'
 import { nowLocalInput, productShuttleCount } from '../lib/calc'
@@ -60,6 +60,8 @@ interface AppContextValue {
   resetAll: () => void
   /** True when state is backed by Supabase (vs local-only localStorage). */
   cloudBacked: boolean
+  /** Club admin/player tallies (Supabase mode only; zeros otherwise). */
+  roleCounts: RoleCounts
 }
 
 const AppContext = createContext<AppContextValue | undefined>(undefined)
@@ -73,6 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AppState>(() =>
     USE_SUPABASE ? emptyState() : loadState(),
   )
+  const [roleCounts, setRoleCounts] = useState<RoleCounts>(emptyRoleCounts)
 
   // Supabase persistence bookkeeping. clubId is the admin's club; lastSyncedRef
   // is the snapshot actually persisted to the DB (the diff baseline); hydrated
@@ -93,6 +96,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       lastSyncedRef.current = emptyState()
       pendingRef.current = null
       setState(emptyState())
+      setRoleCounts(emptyRoleCounts)
       return
     }
     let active = true
@@ -104,6 +108,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         pendingRef.current = null
         hydratedRef.current = true
         setState(res.state)
+        setRoleCounts(res.roleCounts)
       })
       .catch((err) => console.error('Supabase hydrate failed:', err))
     return () => {
@@ -379,6 +384,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           lastSyncedRef.current = res.state
           pendingRef.current = null
           setState(res.state)
+          setRoleCounts(res.roleCounts)
         })
         .catch((err) => console.error('Supabase reload failed:', err))
       return
@@ -401,6 +407,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         deleteTransaction,
         resetAll,
         cloudBacked: USE_SUPABASE,
+        roleCounts,
       }}
     >
       {children}

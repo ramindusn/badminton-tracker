@@ -14,10 +14,13 @@ insert into clubs (id, name, created_at) values
 on conflict (id) do nothing;
 
 -- Admin allowlist ------------------------------------------------------------
--- REPLACE / EXTEND with the real admin email(s). Anyone here becomes a club
--- admin automatically the first time they sign in.
+-- Anyone here becomes a club admin automatically the first time they sign in.
+-- Emails map to the existing members below (linking login->member is Phase 2).
 insert into allowed_admins (email, club_id) values
-  ('ramindusn@gmail.com', '00000000-0000-0000-0000-000000000001')
+  ('ramindusn@gmail.com',            '00000000-0000-0000-0000-000000000001'), -- Ramindu
+  ('udithalokuge@gmail.com',         '00000000-0000-0000-0000-000000000001'), -- Uditha
+  ('nilusha.jayawickrama@aalto.fi',  '00000000-0000-0000-0000-000000000001'), -- Nilusha
+  ('sahan.dandeniyagamage@gmail.com','00000000-0000-0000-0000-000000000001')  -- Sahan
 on conflict (email) do nothing;
 
 -- Members + contributions (200 € each, 2026-06-15 13:00) ----------------------

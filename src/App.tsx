@@ -1,13 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from './context/AuthContext'
 import { useApp } from './context/AppContext'
-import {
-  euro,
-  remainingFund,
-  todayISO,
-  totalShuttlesInStock,
-  usageForDate,
-} from './lib/calc'
+import { euro, remainingFund, totalShuttlesInStock } from './lib/calc'
 import { Header } from './components/Header'
 import { StatCard } from './components/StatCard'
 import { TodayUsage } from './components/TodayUsage'
@@ -21,7 +15,7 @@ import { Button } from './components/Button'
 
 export default function App() {
   const { isAuthenticated, notAdmin, user, signOut } = useAuth()
-  const { state, resetAll, cloudBacked } = useApp()
+  const { state, resetAll, cloudBacked, roleCounts } = useApp()
   const [loginOpen, setLoginOpen] = useState(false)
 
   // Close the login dialog once a session is established (e.g. after the magic
@@ -32,7 +26,10 @@ export default function App() {
 
   const remaining = remainingFund(state)
   const shuttles = totalShuttlesInStock(state)
-  const todayCost = usageForDate(state, todayISO()).totalCost
+  // Role tallies come from Supabase (club_members); in local/e2e mode fall back
+  // to the fund members as players with the current user as the sole admin.
+  const players = cloudBacked ? roleCounts.players : state.members.length
+  const admins = cloudBacked ? roleCounts.admins : 1
 
   return (
     <div className="min-h-full px-4 py-6 sm:py-8" data-testid="app-root">
@@ -75,12 +72,18 @@ export default function App() {
             hint="in stock"
             testId="stat-total-shuttles"
           />
-          <StatCard icon="📅" label="Today's Cost" value={euro(todayCost)} testId="stat-today-cost" />
+          <StatCard
+            icon="🛡️"
+            label="Admins"
+            value={String(admins)}
+            testId="stat-admins"
+          />
           <StatCard
             icon="👥"
-            label="Members"
-            value={String(state.members.length)}
-            testId="stat-members"
+            label="Players"
+            value={String(players)}
+            hint="incl. admins"
+            testId="stat-players"
           />
         </div>
 

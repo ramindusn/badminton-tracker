@@ -10,8 +10,8 @@ test('renders the dashboard with the quick stat cards', async ({ page }) => {
   await expect(page.getByTestId('app-root')).toBeVisible()
   await expect(page.getByTestId('stat-remaining-fund')).toBeVisible()
   await expect(page.getByTestId('stat-total-shuttles')).toBeVisible()
-  await expect(page.getByTestId('stat-today-cost')).toBeVisible()
-  await expect(page.getByTestId('stat-members')).toBeVisible()
+  await expect(page.getByTestId('stat-admins')).toBeVisible()
+  await expect(page.getByTestId('stat-players')).toBeVisible()
 })
 
 test('starts in read-only mode showing the log-in control', async ({ page }) => {

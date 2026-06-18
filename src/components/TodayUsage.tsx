@@ -15,8 +15,30 @@ export function TodayUsage() {
   const { isAuthenticated } = useAuth()
 
   const today = todayISO()
-  const totals = usageForDate(state, today)
+  const todayTotals = usageForDate(state, today)
   const history = usageHistory(state)
+  const playedToday =
+    todayTotals.totalCost > 0 || todayTotals.perProduct.some((p) => p.shuttlesUsed > 0)
+  const lastDay = history[0] // newest first; undefined when nothing logged
+
+  // Show today's tally when there's play today; otherwise fall back to the most
+  // recent game day so the card stays useful on non-game days. Null only before
+  // any game has ever been logged (then just the "Recent game days" hint shows).
+  const focus = playedToday
+    ? {
+        today: true,
+        label: `Today · ${formatDate(today)}`,
+        costLabel: 'Cost today',
+        totals: todayTotals,
+      }
+    : lastDay
+      ? {
+          today: false,
+          label: `Last game day · ${formatDate(lastDay.date.slice(0, 10))}`,
+          costLabel: 'Cost',
+          totals: usageForDate(state, lastDay.date),
+        }
+      : null
 
   function handleDeleteDay(day: { id: string; date: string; totalShuttles: number }) {
     if (
@@ -32,28 +54,38 @@ export function TodayUsage() {
 
   return (
     <Card title="Game-day Usage" icon="📅" accent="border-amber-400">
-      {/* Today's tally */}
-      <div className="rounded-lg bg-amber-50 p-4">
-        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-amber-700">
-          Today · {formatDate(today)}
+      {/* Tally: today when there's play, else the most recent game day */}
+      {focus && (
+        <div className={`rounded-lg p-4 ${focus.today ? 'bg-amber-50' : 'bg-slate-50'}`}>
+          <div
+            className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
+              focus.today ? 'text-amber-700' : 'text-slate-500'
+            }`}
+          >
+            {focus.label}
+          </div>
+          <ul className={`divide-y ${focus.today ? 'divide-amber-100' : 'divide-slate-200'}`}>
+            {focus.totals.perProduct.map(({ product, shuttlesUsed }) => (
+              <li key={product.id} className="flex justify-between py-1.5 text-sm">
+                <span className="text-slate-600">
+                  {product.brand} {product.model}
+                </span>
+                <strong className="text-slate-800">{shuttlesUsed} used</strong>
+              </li>
+            ))}
+            {focus.totals.perProduct.length === 0 && (
+              <li className="py-1.5 text-sm text-slate-500">No products yet.</li>
+            )}
+          </ul>
+          <div
+            className={`mt-2 border-t pt-2 text-right text-base font-bold text-slate-800 ${
+              focus.today ? 'border-amber-200' : 'border-slate-200'
+            }`}
+          >
+            {focus.costLabel}: {euro(focus.totals.totalCost)}
+          </div>
         </div>
-        <ul className="divide-y divide-amber-100">
-          {totals.perProduct.map(({ product, shuttlesUsed }) => (
-            <li key={product.id} className="flex justify-between py-1.5 text-sm">
-              <span className="text-slate-600">
-                {product.brand} {product.model}
-              </span>
-              <strong className="text-slate-800">{shuttlesUsed} used</strong>
-            </li>
-          ))}
-          {totals.perProduct.length === 0 && (
-            <li className="py-1.5 text-sm text-slate-500">No products yet.</li>
-          )}
-        </ul>
-        <div className="mt-2 border-t border-amber-200 pt-2 text-right text-base font-bold text-slate-800">
-          Cost today: {euro(totals.totalCost)}
-        </div>
-      </div>
+      )}
 
       {/* Game-day history */}
       <div className="mt-5">
