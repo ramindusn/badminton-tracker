@@ -53,33 +53,33 @@ export function TodayUsage() {
   }
 
   return (
-    <Card title="Game-day Usage" icon="📅" accent="border-amber-400">
+    <Card title="Game-day Usage" icon="📅">
       {/* Tally: today when there's play, else the most recent game day */}
       {focus && (
-        <div className={`rounded-lg p-4 ${focus.today ? 'bg-amber-50' : 'bg-slate-50'}`}>
+        <div className={`rounded-lg p-4 ${focus.today ? 'bg-amber-50 dark:bg-amber-500/10' : 'bg-surface-muted'}`}>
           <div
             className={`mb-2 text-xs font-semibold uppercase tracking-wide ${
-              focus.today ? 'text-amber-700' : 'text-slate-500'
+              focus.today ? 'text-amber-700 dark:text-amber-300' : 'text-fg-muted'
             }`}
           >
             {focus.label}
           </div>
-          <ul className={`divide-y ${focus.today ? 'divide-amber-100' : 'divide-slate-200'}`}>
+          <ul className={`divide-y ${focus.today ? 'divide-amber-100' : 'divide-line'}`}>
             {focus.totals.perProduct.map(({ product, shuttlesUsed }) => (
               <li key={product.id} className="flex justify-between py-1.5 text-sm">
-                <span className="text-slate-600">
+                <span className="text-fg-muted">
                   {product.brand} {product.model}
                 </span>
-                <strong className="text-slate-800">{shuttlesUsed} used</strong>
+                <strong className="text-fg">{shuttlesUsed} used</strong>
               </li>
             ))}
             {focus.totals.perProduct.length === 0 && (
-              <li className="py-1.5 text-sm text-slate-500">No products yet.</li>
+              <li className="py-1.5 text-sm text-fg-muted">No products yet.</li>
             )}
           </ul>
           <div
-            className={`mt-2 border-t pt-2 text-right text-base font-bold text-slate-800 ${
-              focus.today ? 'border-amber-200' : 'border-slate-200'
+            className={`mt-2 border-t pt-2 text-right text-base font-bold text-fg ${
+              focus.today ? 'border-amber-200' : 'border-line'
             }`}
           >
             {focus.costLabel}: {euro(focus.totals.totalCost)}
@@ -89,11 +89,11 @@ export function TodayUsage() {
 
       {/* Game-day history */}
       <div className="mt-5">
-        <h3 className="mb-2 text-sm font-semibold text-slate-500">
+        <h3 className="mb-2 text-sm font-semibold text-fg-muted">
           Recent game days
         </h3>
         {history.length === 0 ? (
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-fg-subtle">
             No game days logged yet.
             {isAuthenticated
               ? ' Use + Add transaction in the header to log one.'
@@ -104,13 +104,13 @@ export function TodayUsage() {
             {history.slice(0, 6).map((day) => (
               <li
                 key={day.id}
-                className="flex items-start justify-between gap-2 rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-sm"
+                className="flex items-start justify-between gap-2 rounded-lg border border-line bg-surface-muted px-3 py-2 text-sm"
               >
                 <div className="min-w-0 flex-1">
-                  <div className="font-medium text-slate-700">
+                  <div className="font-medium text-fg">
                     {formatDateTime(day.date)}
                   </div>
-                  <div className="break-words text-xs text-slate-400">
+                  <div className="break-words text-xs text-fg-subtle">
                     {day.parts
                       .filter((p) => p.shuttlesUsed > 0)
                       .map((p) => `${p.name}: ${p.shuttlesUsed}`)
@@ -118,17 +118,17 @@ export function TodayUsage() {
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <div className="font-semibold text-slate-700">
+                  <div className="font-semibold text-fg">
                     {day.totalShuttles} shuttles
                   </div>
-                  <div className="text-xs text-slate-400">{euro(day.totalCost)}</div>
+                  <div className="text-xs text-fg-subtle">{euro(day.totalCost)}</div>
                 </div>
                 {isAuthenticated && (
                   <button
                     type="button"
                     aria-label="Delete game day"
                     onClick={() => handleDeleteDay(day)}
-                    className="ml-2 rounded p-1 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-600"
+                    className="ml-2 rounded p-1 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-600"
                   >
                     ✕
                   </button>

@@ -2,6 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Clean Court semantic tokens. Neutrals are driven by CSS variables so the
+   whole app flips between light and dark from a single source of truth; the
+   teal accent and the vivid money/badge colors stay the same on both themes.
+   Values are space-separated RGB channels so Tailwind's /<alpha-value> works. */
+:root {
+  --bg: 248 250 252; /* slate-50 */
+  --surface: 255 255 255; /* white */
+  --surface-muted: 248 250 252; /* slate-50 */
+  --border: 226 232 240; /* slate-200 */
+  --fg: 15 23 42; /* slate-900 */
+  --fg-muted: 100 116 139; /* slate-500 */
+  --fg-subtle: 148 163 184; /* slate-400 */
+}
+
+.dark {
+  --bg: 2 6 23; /* slate-950 */
+  --surface: 15 23 42; /* slate-900 */
+  --surface-muted: 30 41 59; /* slate-800 */
+  --border: 51 65 85; /* slate-700 */
+  --fg: 241 245 249; /* slate-100 */
+  --fg-muted: 148 163 184; /* slate-400 */
+  --fg-subtle: 100 116 139; /* slate-500 */
+}
+
 html,
 body,
 #root {
@@ -10,6 +34,7 @@ body,
 
 body {
   margin: 0;
-  background-color: #f4f7f6;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: rgb(var(--bg));
+  color: rgb(var(--fg));
+  font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }

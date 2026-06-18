@@ -22,7 +22,7 @@ interface LogRow {
 const PAGE_SIZE = 10
 
 const KIND_BADGE: Record<Kind, { label: string; className: string }> = {
-  contribution: { label: 'Cash', className: 'bg-sky-100 text-sky-700' },
+  contribution: { label: 'Cash', className: 'bg-teal-100 text-teal-700' },
   purchase: { label: 'Purchase', className: 'bg-purple-100 text-purple-700' },
   expense: { label: 'Expense', className: 'bg-amber-100 text-amber-700' },
   usage: { label: 'Usage', className: 'bg-emerald-100 text-emerald-700' },
@@ -101,9 +101,9 @@ export function TransactionLog() {
   }
 
   return (
-    <Card title="Transaction Log" icon="🧾" accent="border-slate-400">
+    <Card title="Transaction Log" icon="🧾">
       {rows.length === 0 ? (
-        <p className="py-4 text-sm text-slate-500">No transactions yet.</p>
+        <p className="py-4 text-sm text-fg-muted">No transactions yet.</p>
       ) : (
         <>
           <div data-testid="transaction-log">
@@ -114,10 +114,10 @@ export function TransactionLog() {
                 return (
                   <li
                     key={`m-${r.kind}-${start + i}`}
-                    className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+                    className="overflow-hidden rounded-lg border border-line bg-surface shadow-sm"
                   >
                     {/* Header: type + amount */}
-                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 bg-slate-50 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2 border-b border-line bg-surface-muted px-3 py-2">
                       <span
                         className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${badge.className}`}
                       >
@@ -132,12 +132,12 @@ export function TransactionLog() {
                       </span>
                     </div>
                     {/* Body: description */}
-                    <div className="break-words px-3 py-2.5 text-sm leading-snug text-slate-700">
+                    <div className="break-words px-3 py-2.5 text-sm leading-snug text-fg">
                       {r.label}
                     </div>
                     {/* Footer: date + actions */}
-                    <div className="flex items-center justify-between gap-2 border-t border-slate-100 bg-slate-50 px-3 py-1.5">
-                      <span className="text-xs text-slate-500">
+                    <div className="flex items-center justify-between gap-2 border-t border-line bg-surface-muted px-3 py-1.5">
+                      <span className="text-xs text-fg-muted">
                         {formatDateTime(r.date)}
                       </span>
                       {isAuthenticated && (
@@ -148,7 +148,7 @@ export function TransactionLog() {
                               aria-label="Edit batch price"
                               title="Edit batch price"
                               onClick={() => setEditingBatch(r.batch)}
-                              className="rounded p-1 text-slate-400 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+                              className="rounded p-1 text-fg-subtle transition-colors hover:bg-teal-50 hover:text-teal-600"
                             >
                               ✎
                             </button>
@@ -157,7 +157,7 @@ export function TransactionLog() {
                             type="button"
                             aria-label="Delete entry"
                             onClick={() => handleDelete(r)}
-                            className="rounded p-1 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                            className="rounded p-1 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-600"
                           >
                             ✕
                           </button>
@@ -173,7 +173,7 @@ export function TransactionLog() {
             <div className="hidden overflow-x-auto sm:block">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
+                <tr className="border-b border-line text-left text-xs uppercase tracking-wide text-fg-subtle">
                   <th className="py-2 pr-3 font-medium">Date</th>
                   <th className="py-2 pr-3 font-medium">Type</th>
                   <th className="py-2 pr-3 font-medium">Description</th>
@@ -187,9 +187,9 @@ export function TransactionLog() {
                   return (
                     <tr
                       key={`${r.kind}-${start + i}`}
-                      className="border-b border-slate-100 align-top hover:bg-slate-50"
+                      className="border-b border-line align-top hover:bg-surface-muted"
                     >
-                      <td className="whitespace-nowrap py-2.5 pr-3 text-slate-500">
+                      <td className="whitespace-nowrap py-2.5 pr-3 text-fg-muted">
                         {formatDateTime(r.date)}
                       </td>
                       <td className="py-2.5 pr-3">
@@ -199,7 +199,7 @@ export function TransactionLog() {
                           {badge.label}
                         </span>
                       </td>
-                      <td className="py-2.5 pr-3 text-slate-700">{r.label}</td>
+                      <td className="py-2.5 pr-3 text-fg">{r.label}</td>
                       <td
                         className={`whitespace-nowrap py-2.5 pr-3 text-right font-bold ${
                           r.amount >= 0 ? 'text-emerald-600' : 'text-red-500'
@@ -216,7 +216,7 @@ export function TransactionLog() {
                                 aria-label="Edit batch price"
                                 title="Edit batch price"
                                 onClick={() => setEditingBatch(r.batch)}
-                                className="rounded p-1 text-slate-300 transition-colors hover:bg-indigo-50 hover:text-indigo-600"
+                                className="rounded p-1 text-fg-subtle transition-colors hover:bg-teal-50 hover:text-teal-600"
                               >
                                 ✎
                               </button>
@@ -225,7 +225,7 @@ export function TransactionLog() {
                               type="button"
                               aria-label="Delete entry"
                               onClick={() => handleDelete(r)}
-                              className="rounded p-1 text-slate-300 transition-colors hover:bg-red-50 hover:text-red-600"
+                              className="rounded p-1 text-fg-subtle transition-colors hover:bg-red-50 hover:text-red-600"
                             >
                               ✕
                             </button>
@@ -241,7 +241,7 @@ export function TransactionLog() {
           </div>
 
           {/* Pagination */}
-          <div className="mt-4 flex flex-col gap-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <div className="mt-4 flex flex-col gap-3 text-sm text-fg-muted sm:flex-row sm:items-center sm:justify-between">
             <span data-testid="log-range">
               Showing {start + 1}–{Math.min(start + PAGE_SIZE, rows.length)} of{' '}
               {rows.length}
@@ -316,7 +316,7 @@ function EditBatchPriceModal({
           onChange={(e) => setPrice(e.target.value)}
           autoFocus
         />
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-subtle">
           This changes the fixed price for this whole batch of {batch.barrels}{' '}
           barrel{batch.barrels === 1 ? '' : 's'}. The fund and average prices update
           accordingly. Other batches are unaffected.

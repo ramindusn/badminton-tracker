@@ -26,11 +26,11 @@ export function Modal({ open, title, onClose, children }: ModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+        className="w-full max-w-md rounded-xl bg-surface p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
+          <h3 className="text-lg font-semibold text-fg">{title}</h3>
           <Button variant="ghost" onClick={onClose} aria-label="Close" className="px-2 py-1">
             ✕
           </Button>

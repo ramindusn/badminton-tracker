@@ -29,11 +29,11 @@ export function Login({ onClose }: { onClose: () => void }) {
   if (status === 'sent') {
     return (
       <div className="space-y-3" data-testid="login-sent">
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-fg-muted">
           ✉️ Check your inbox — we sent a sign-in link to{' '}
           <span className="font-medium">{email}</span>. Click it to log in.
         </p>
-        <p className="text-xs text-slate-400">
+        <p className="text-xs text-fg-subtle">
           The link opens the app already signed in. You can close this window.
         </p>
         <div className="flex justify-end">
@@ -47,7 +47,7 @@ export function Login({ onClose }: { onClose: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
-      <p className="text-sm text-slate-500">
+      <p className="text-sm text-fg-muted">
         Enter your email and we'll send you a one-time sign-in link. Only club
         admins can edit the fund and inventory.
       </p>
