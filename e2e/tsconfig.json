@@ -1,0 +1,8 @@
+{
+  // The root tsconfig excludes e2e/ so Playwright's types don't leak into the
+  // SPA type-check. This project covers the e2e specs on their own, giving the
+  // editor proper @playwright/test types instead of broken inferred defaults.
+  "extends": "../tsconfig.json",
+  "include": ["**/*.ts"],
+  "exclude": []
+}
